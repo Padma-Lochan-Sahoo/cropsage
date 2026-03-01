@@ -7,6 +7,7 @@ import ChatPage from "./pages/ChatPage.jsx";
 import DiseaseDetection from "./pages/DiseaseDetection.jsx";
 import ProfilePage from "./pages/ProfilePage.jsx";
 import WeatherAdvisory from "./pages/WeatherAdvisory.jsx";
+import FertilizerRecommendation from "./pages/FertilizerRecommendation.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
 
 function App() {
@@ -56,6 +57,11 @@ function App() {
             <Route
               path="/weather"
               element={token ? <WeatherAdvisory /> : <Navigate to="/auth" />}
+            />
+
+            <Route
+              path="/fertilizer"
+              element={token ? <FertilizerRecommendation /> : <Navigate to="/auth" />}
             />
 
           </Routes>

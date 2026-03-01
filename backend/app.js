@@ -7,6 +7,7 @@ import diseaseRoute from "./src/routes/diseaseRoute.js";
 import chatRoute from "./src/routes/chatRoute.js";
 import profileRoute from "./src/routes/profileRoute.js";
 import weatherRoute from "./src/routes/weatherRoute.js";
+import fertilizerRoute from "./src/routes/fertilizerRoute.js";
 import connectDB from "./src/config/db.js";
 dotenv.config();
 
@@ -34,6 +35,7 @@ app.use("/api/disease", diseaseRoute);
 app.use("/api/chat", chatRoute);
 app.use("/api/profile", profileRoute);
 app.use("/api/weather", weatherRoute);
+app.use("/api/fertilizer", fertilizerRoute);
 
 
 // Start the server
