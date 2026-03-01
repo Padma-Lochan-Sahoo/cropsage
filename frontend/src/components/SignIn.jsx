@@ -3,12 +3,14 @@ import axios from "axios";
 import { GoogleLogin } from "@react-oauth/google";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useTranslation } from "react-i18next";
 
 function SignIn() {
   const [state, setState] = useState({ email: "", password: "" });
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const { t } = useTranslation();
 
   const handleChange = (evt) => {
     const { name, value } = evt.target;
@@ -28,7 +30,7 @@ function SignIn() {
       window.location.href = "/home";
     } catch (error) {
       console.error("There was an error logging in!", error);
-      alert("Login failed. Please check your credentials.");
+      alert(t("auth.loginFailed"));
     } finally {
       setLoading(false);
     }
@@ -44,13 +46,13 @@ function SignIn() {
       window.location.href = "/home";
     } catch (error) {
       console.error("Google login error:", error);
-      alert("Google login failed. Please try again.");
+      alert(t("auth.googleLoginFailed"));
     }
   };
 
   const handleGoogleLoginError = (error) => {
     console.error("Google login error:", error);
-    alert("Google login failed. Please try again.");
+    alert(t("auth.googleLoginFailed"));
   };
 
   const inputStyle = {
@@ -73,10 +75,10 @@ function SignIn() {
           className="text-lg font-semibold text-slate-50"
           style={{ fontFamily: "'Sora', sans-serif" }}
         >
-          Welcome back
+          {t("auth.welcomeBack")}
         </h2>
         <p className="text-xs text-slate-500 mt-0.5">
-          Sign in to continue to your dashboard
+          {t("auth.signInToContinue")}
         </p>
       </div>
 
@@ -91,14 +93,14 @@ function SignIn() {
       {/* Divider */}
       <div className="flex items-center gap-3">
         <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.07)" }} />
-        <span className="text-[11px] text-slate-600 font-medium">or</span>
+        <span className="text-[11px] text-slate-600 font-medium">{t("common.or")}</span>
         <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.07)" }} />
       </div>
 
       {/* Form */}
       <form onSubmit={handleOnSubmit} className="space-y-3">
         <div className="space-y-1">
-          <label className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Email</label>
+          <label className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">{t("auth.email")}</label>
           <input
             type="email"
             name="email"
@@ -119,7 +121,7 @@ function SignIn() {
 
         <div className="space-y-1">
           <div className="flex items-center justify-between">
-            <label className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Password</label>
+            <label className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">{t("auth.password")}</label>
             <a
               href="#"
               className="text-[11px] transition-colors"
@@ -127,7 +129,7 @@ function SignIn() {
               onMouseEnter={(e) => e.target.style.color = "#6ee7b7"}
               onMouseLeave={(e) => e.target.style.color = "#10b981"}
             >
-              Forgot password?
+              {t("auth.forgotPassword")}
             </a>
           </div>
           <div className="relative">
@@ -177,7 +179,7 @@ function SignIn() {
             e.target.style.boxShadow = loading ? "none" : "0 4px 20px rgba(16,185,129,0.3)";
           }}
         >
-          {loading ? "Signing in…" : "Sign In →"}
+          {loading ? t("auth.signingIn") : t("auth.signInButton")}
         </button>
       </form>
     </div>

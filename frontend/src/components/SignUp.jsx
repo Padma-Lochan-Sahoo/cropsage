@@ -3,12 +3,14 @@ import axios from "axios";
 import { GoogleLogin } from "@react-oauth/google";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useTranslation } from "react-i18next";
 
 function SignUp() {
   const [state, setState] = useState({ username: "", email: "", password: "" });
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const { t } = useTranslation();
 
   const handleChange = (evt) => {
     const { name, value } = evt.target;
@@ -28,7 +30,7 @@ function SignUp() {
       window.location.href = "/home";
     } catch (error) {
       console.error("There was an error signing up!", error);
-      alert("Signup failed. Please try again.");
+      alert(t("auth.signupFailed"));
     } finally {
       setLoading(false);
     }
@@ -44,13 +46,13 @@ function SignUp() {
       window.location.href = "/home";
     } catch (error) {
       console.error("Google signup error:", error);
-      alert("Google signup failed. Please try again.");
+      alert(t("auth.googleLoginFailed"));
     }
   };
 
   const handleGoogleLoginError = (error) => {
     console.error("Google signup error:", error);
-    alert("Google signup failed. Please try again.");
+    alert(t("auth.googleLoginFailed"));
   };
 
   const inputStyle = {
@@ -82,10 +84,10 @@ function SignUp() {
           className="text-lg font-semibold text-slate-50"
           style={{ fontFamily: "'Sora', sans-serif" }}
         >
-          Create your account
+          {t("auth.createAccount")}
         </h2>
         <p className="text-xs text-slate-500 mt-0.5">
-          Join thousands of farmers using AI-powered insights
+          {t("auth.joinFarmers")}
         </p>
       </div>
 
@@ -100,14 +102,14 @@ function SignUp() {
       {/* Divider */}
       <div className="flex items-center gap-3">
         <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.07)" }} />
-        <span className="text-[11px] text-slate-600 font-medium">or</span>
+        <span className="text-[11px] text-slate-600 font-medium">{t("common.or")}</span>
         <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.07)" }} />
       </div>
 
       {/* Form */}
       <form onSubmit={handleOnSubmit} className="space-y-3">
         <div className="space-y-1">
-          <label className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Username</label>
+          <label className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">{t("auth.username")}</label>
           <input
             type="text"
             name="username"
@@ -121,7 +123,7 @@ function SignUp() {
         </div>
 
         <div className="space-y-1">
-          <label className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Email</label>
+          <label className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">{t("auth.email")}</label>
           <input
             type="email"
             name="email"
@@ -135,7 +137,7 @@ function SignUp() {
         </div>
 
         <div className="space-y-1">
-          <label className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Password</label>
+          <label className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">{t("auth.password")}</label>
           <div className="relative">
             <input
               type={passwordVisible ? "text" : "password"}
@@ -159,7 +161,7 @@ function SignUp() {
 
         {/* Password strength hint */}
         <p className="text-[11px] text-slate-600">
-          Use 8+ characters with letters and numbers.
+          {t("auth.passwordHint")}
         </p>
 
         <button
@@ -182,13 +184,11 @@ function SignUp() {
             e.target.style.boxShadow = loading ? "none" : "0 4px 20px rgba(16,185,129,0.3)";
           }}
         >
-          {loading ? "Creating account…" : "Create Account →"}
+          {loading ? t("auth.signingUp") : t("auth.signUpButton")}
         </button>
 
         <p className="text-[11px] text-slate-600 text-center">
-          By signing up you agree to our{" "}
-          <a href="#" style={{ color: "#10b981" }}>Terms</a> &{" "}
-          <a href="#" style={{ color: "#10b981" }}>Privacy Policy</a>.
+          {t("auth.termsAndPrivacy")}
         </p>
       </form>
     </div>

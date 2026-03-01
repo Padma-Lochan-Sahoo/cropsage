@@ -2,11 +2,13 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext.jsx";
 import { FaCrosshairs } from "react-icons/fa";
+import { useTranslation } from "react-i18next";
 
 const API_BASE = import.meta.env?.VITE_API_BASE_URL || "http://localhost:5001";
 
 function WeatherAdvisory() {
   const { token } = useAuth();
+  const { t } = useTranslation();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -141,7 +143,7 @@ function WeatherAdvisory() {
       <div className="flex items-center justify-center min-h-[50vh]">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-slate-500 text-sm">Loading weather data...</p>
+          <p className="text-slate-500 text-sm">{t("weather.loadingWeather")}</p>
         </div>
       </div>
     );
@@ -149,10 +151,10 @@ function WeatherAdvisory() {
 
   // Location Form - shown when needsLocation or editingLocation
   if (needsLocation || editingLocation) {
-    const title = needsLocation ? "Farm Location Required" : "Change Location";
+    const title = needsLocation ? t("weather.farmLocationRequired") : t("weather.changeLocationTitle");
     const subtitle = needsLocation
-      ? "Enter your farm location to get weather-based advisories"
-      : "Update your farm location for accurate weather data";
+      ? t("weather.farmLocationSubtitle")
+      : t("weather.updateLocationSubtitle");
 
     return (
       <div className="max-w-lg mx-auto py-8 px-4">
@@ -174,7 +176,7 @@ function WeatherAdvisory() {
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">
-                Farm Location
+                {t("weather.farmLocation")}
               </label>
               <input
                 type="text"
@@ -219,7 +221,7 @@ function WeatherAdvisory() {
                 disabled={savingLocation || !locationInput.trim()}
                 className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-900 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 disabled:cursor-not-allowed transition"
               >
-                {savingLocation ? "Saving..." : "Get Weather Advisory"}
+                {savingLocation ? t("weather.saving") : t("weather.getWeatherAdvisory")}
               </button>
             </div>
           </div>
@@ -255,10 +257,10 @@ function WeatherAdvisory() {
             className="text-2xl font-bold text-slate-50"
             style={{ fontFamily: "'DM Sans', sans-serif" }}
           >
-            Weather Advisory
+            {t("weather.title")}
           </h1>
           <p className="text-slate-500 text-sm mt-1">
-            Real-time weather insights for your farm
+            {t("weather.subtitle")}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -278,7 +280,7 @@ function WeatherAdvisory() {
             }}
             className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition"
           >
-            Change location
+            {t("weather.changeLocation")}
           </button>
         </div>
       </div>
@@ -360,7 +362,7 @@ function WeatherAdvisory() {
       {/* Advisories */}
       <div>
         <h2 className="text-lg font-semibold text-slate-100 mb-4">
-          🌾 Crop Advisories
+          🌾 {t("weather.cropAdvisories")}
         </h2>
         <div className="space-y-3">
           {advisories.map((advisory, idx) => (
@@ -399,7 +401,7 @@ function WeatherAdvisory() {
       {/* 48-hour Forecast */}
       <div>
         <h2 className="text-lg font-semibold text-slate-100 mb-4">
-          📅 48-Hour Forecast
+          📅 {t("weather.forecast48h")}
         </h2>
         <div className="overflow-x-auto pb-2">
           <div className="flex gap-3" style={{ minWidth: "max-content" }}>
@@ -433,7 +435,7 @@ function WeatherAdvisory() {
 
       {/* Tips Section */}
       <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-5">
-        <h3 className="text-emerald-400 font-semibold mb-2">💡 Quick Tips</h3>
+        <h3 className="text-emerald-400 font-semibold mb-2">💡 {t("weather.quickTips")}</h3>
         <ul className="text-sm text-slate-300 space-y-1">
           <li>• Check weather every morning before field activities</li>
           <li>• Plan irrigation based on upcoming rain predictions</li>

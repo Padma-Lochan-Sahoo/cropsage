@@ -1,10 +1,13 @@
 import { useState } from "react";
 import SignIn from "../components/SignIn.jsx";
 import SignUp from "../components/SignUp.jsx";
+import { useTranslation } from "react-i18next";
+import LanguageSelector from "../components/LanguageSelector.jsx";
 
 function AuthPage() {
   const [mode, setMode] = useState("signIn");
   const isSignIn = mode === "signIn";
+  const { t } = useTranslation();
 
   return (
     <div
@@ -96,6 +99,11 @@ function AuthPage() {
 
       <div className="max-w-5xl w-full grid gap-10 md:grid-cols-[1fr_0.9fr] items-center relative z-10">
 
+        {/* Language selector — top right (for non-logged-in users) */}
+        <div className="absolute top-0 right-0 z-20">
+          <LanguageSelector variant="auth" />
+        </div>
+
         {/* LEFT — Hero section */}
         <section className="space-y-6 pr-0 md:pr-6">
           <div className="fade-up fade-up-1 flex items-center gap-2">
@@ -114,25 +122,24 @@ function AuthPage() {
             <h1
               className="text-4xl md:text-5xl font-semibold tracking-tight leading-tight text-slate-50"
             >
-              Farming, guided
+              {t("auth.farmingGuided")}
               <br />
-              <span className="shimmer-text">by intelligence.</span>
+              <span className="shimmer-text">{t("auth.byIntelligence")}</span>
             </h1>
           </div>
 
           <p className="fade-up fade-up-3 text-sm text-slate-400 leading-relaxed max-w-sm">
-            Diagnose crop diseases, get irrigation schedules, and optimize your
-            harvest — all through a conversational AI built for agriculture.
+            {t("auth.tagline")}
           </p>
 
           {/* Feature list */}
           <div className="fade-up fade-up-4 space-y-2.5 pt-2">
             {[
-              { icon: "⚡", label: "Instant disease diagnosis" },
-              { icon: "💧", label: "Smart irrigation recommendations" },
-              { icon: "📈", label: "Yield optimization insights" },
+              { icon: "⚡", labelKey: "auth.instantDiagnosis" },
+              { icon: "💧", labelKey: "auth.smartIrrigation" },
+              { icon: "📈", labelKey: "auth.yieldInsights" },
             ].map((item) => (
-              <div key={item.label} className="flex items-center gap-3 group">
+              <div key={item.labelKey} className="flex items-center gap-3 group">
                 <span
                   className="w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0"
                   style={{
@@ -142,7 +149,7 @@ function AuthPage() {
                 >
                   {item.icon}
                 </span>
-                <span className="text-sm text-slate-300">{item.label}</span>
+                <span className="text-sm text-slate-300">{t(item.labelKey)}</span>
               </div>
             ))}
           </div>
@@ -150,18 +157,18 @@ function AuthPage() {
           {/* Stats row */}
           <div className="fade-up fade-up-5 grid grid-cols-3 gap-3 pt-2">
             {[
-              { value: "50K+", label: "Farmers" },
-              { value: "98%", label: "Accuracy" },
-              { value: "24/7", label: "Support" },
+              { value: "50K+", labelKey: "auth.farmers" },
+              { value: "98%", labelKey: "auth.accuracy" },
+              { value: "24/7", labelKey: "auth.support" },
             ].map((stat) => (
-              <div key={stat.label} className="stat-card rounded-xl p-3 text-center cursor-default">
+              <div key={stat.labelKey} className="stat-card rounded-xl p-3 text-center cursor-default">
                 <div
                   className="text-lg font-bold"
                   style={{ color: "#10b981", fontFamily: "'Space Mono', monospace" }}
                 >
                   {stat.value}
                 </div>
-                <div className="text-[11px] text-slate-400 mt-0.5">{stat.label}</div>
+                <div className="text-[11px] text-slate-400 mt-0.5">{t(stat.labelKey)}</div>
               </div>
             ))}
           </div>
@@ -210,7 +217,7 @@ function AuthPage() {
                       : { color: "#94a3b8" }
                   }
                 >
-                  {m === "signIn" ? "Sign In" : "Sign Up"}
+                  {m === "signIn" ? t("auth.signIn") : t("auth.signUp")}
                 </button>
               ))}
             </div>

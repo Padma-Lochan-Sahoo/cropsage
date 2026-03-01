@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 /* ─── Typewriter ─── */
 const CROPS = ["Wheat 🌾", "Rice 🌿", "Corn 🌽", "Tomato 🍅", "Soybean 🫘", "Cotton 🌸"];
@@ -140,6 +141,7 @@ function Marquee({ items }) {
 
 export default function HomePage() {
   const crop = useTypewriter(CROPS);
+  const { t } = useTranslation();
   const [tab, setTab] = useState(0);
   const [statsOn, setStatsOn] = useState(false);
   const statsRef = useRef();
@@ -231,7 +233,7 @@ export default function HomePage() {
         <div style={{ animation: "fadeUp 0.5s ease both", marginBottom: 36 }}>
           <div className="welcome-badge">
             <span style={{ fontSize: 32 }}>🌿</span>
-            <span style={{ fontSize: 20, fontWeight: 700, color: "#34d399", letterSpacing: "0.04em", fontFamily: "'DM Sans', sans-serif" }}>Welcome to CropSage</span>
+            <span style={{ fontSize: 20, fontWeight: 700, color: "#34d399", letterSpacing: "0.04em", fontFamily: "'DM Sans', sans-serif" }}>{t("home.welcomeToCropSage")}</span>
             <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#34d399", animation: "pulseGlow 2s ease-in-out infinite", flexShrink: 0 }} />
           </div>
         </div>
@@ -239,15 +241,15 @@ export default function HomePage() {
         {/* Headline */}
         <div style={{ animation: "fadeUp 0.6s 0.1s ease both", opacity: 0, animationFillMode: "forwards" }}>
           <h1 className="serif" style={{ fontSize: "clamp(44px, 8.5vw, 96px)", lineHeight: 1.03, marginBottom: 16, fontWeight: 900, letterSpacing: "-0.02em" }}>
-            Smarter farming<br/>
-            <span className="shimmer-green">for every crop</span>
+            {t("home.smarterFarming")}<br/>
+            <span className="shimmer-green">{t("home.forEveryCrop")}</span>
           </h1>
         </div>
 
         {/* Typewriter */}
         <div style={{ animation: "fadeUp 0.6s 0.2s ease both", opacity: 0, animationFillMode: "forwards", marginBottom: 24 }}>
           <p style={{ fontSize: "clamp(18px, 3vw, 28px)", color: "#475569", fontWeight: 300 }}>
-            AI assistant for{" "}
+            {t("home.aiAssistantFor")}{" "}
             <span style={{ color: "#34d399", fontWeight: 600 }}>{crop}</span>
             <span className="cursor-blink" />
           </p>
@@ -256,14 +258,14 @@ export default function HomePage() {
         {/* Description */}
         <div style={{ animation: "fadeUp 0.6s 0.3s ease both", opacity: 0, animationFillMode: "forwards", marginBottom: 40 }}>
           <p style={{ fontSize: 16, color: "#3d4f63", maxWidth: 540, lineHeight: 1.85, margin: "0 auto" }}>
-            Disease detection, irrigation planning, crop health Q&A — all in one place. Purpose-built for farmers and agronomists who need accurate, actionable answers.
+            {t("home.description")}
           </p>
         </div>
 
         {/* CTAs */}
         <div style={{ animation: "fadeUp 0.6s 0.4s ease both", opacity: 0, animationFillMode: "forwards", display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center", marginBottom: 64 }}>
-          <button className="cta-btn">Get Started Free →</button>
-          <button className="ghost-btn">▶ Watch Demo</button>
+          <button className="cta-btn">{t("home.getStartedFree")}</button>
+          <button className="ghost-btn">{t("home.watchDemo")}</button>
         </div>
 
         {/* Hero dashboard cards */}
@@ -317,8 +319,8 @@ export default function HomePage() {
       {/* ══ FEATURES ══ */}
       <section style={{ position: "relative", zIndex: 1, padding: "80px 24px", maxWidth: 1100, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 48 }}>
-          <p className="section-label" style={{ marginBottom: 14 }}>Features</p>
-          <h2 className="serif" style={{ fontSize: "clamp(30px,5vw,52px)", fontWeight: 700 }}>One platform. Every need.</h2>
+          <p className="section-label" style={{ marginBottom: 14 }}>{t("home.features")}</p>
+          <h2 className="serif" style={{ fontSize: "clamp(30px,5vw,52px)", fontWeight: 700 }}>{t("home.onePlatform")}</h2>
         </div>
         <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap", marginBottom: 36 }}>
           {FEATURES.map((ft, i) => (
@@ -364,8 +366,8 @@ export default function HomePage() {
       {/* ══ TIPS ══ */}
       <section style={{ position: "relative", zIndex: 1, padding: "80px 24px", maxWidth: 1100, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 48 }}>
-          <p className="section-label" style={{ marginBottom: 14 }}>Farmer Tips</p>
-          <h2 className="serif" style={{ fontSize: "clamp(30px,5vw,52px)", fontWeight: 700 }}>Daily wisdom from the field</h2>
+          <p className="section-label" style={{ marginBottom: 14 }}>{t("home.farmerTips")}</p>
+          <h2 className="serif" style={{ fontSize: "clamp(30px,5vw,52px)", fontWeight: 700 }}>{t("home.dailyWisdom")}</h2>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: 18 }}>
           {TIPS.map((tip, i) => (
@@ -383,8 +385,8 @@ export default function HomePage() {
       {/* ══ HOW IT WORKS ══ */}
       <section style={{ position: "relative", zIndex: 1, padding: "80px 24px", maxWidth: 1000, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 56 }}>
-          <p className="section-label" style={{ marginBottom: 14 }}>How It Works</p>
-          <h2 className="serif" style={{ fontSize: "clamp(30px,5vw,52px)", fontWeight: 700 }}>From field to insight in 3 steps</h2>
+          <p className="section-label" style={{ marginBottom: 14 }}>{t("home.howItWorks")}</p>
+          <h2 className="serif" style={{ fontSize: "clamp(30px,5vw,52px)", fontWeight: 700 }}>{t("home.fromFieldToInsight")}</h2>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 32, position: "relative" }}>
           <div style={{ position: "absolute", top: 44, left: "18%", right: "18%", height: 1, background: "linear-gradient(90deg,transparent,rgba(52,211,153,0.3),transparent)" }} />
@@ -411,8 +413,8 @@ export default function HomePage() {
       <section style={{ position: "relative", zIndex: 1, padding: "80px 24px", background: "rgba(52,211,153,0.015)" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 48 }}>
-            <p className="section-label" style={{ marginBottom: 14 }}>Testimonials</p>
-            <h2 className="serif" style={{ fontSize: "clamp(30px,5vw,52px)", fontWeight: 700 }}>Trusted by farmers worldwide</h2>
+<p className="section-label" style={{ marginBottom: 14 }}>{t("home.testimonials")}</p>
+          <h2 className="serif" style={{ fontSize: "clamp(30px,5vw,52px)", fontWeight: 700 }}>{t("home.trustedByFarmers")}</h2>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px,1fr))", gap: 20 }}>
             {TESTIMONIALS.map((t, i) => (
@@ -467,9 +469,9 @@ export default function HomePage() {
           <div style={{ position: "absolute", top: -50, right: -50, width: 200, height: 200, borderRadius: "50%", background: "radial-gradient(circle, rgba(52,211,153,0.1) 0%, transparent 70%)" }} />
           <div style={{ position: "absolute", bottom: -30, left: -30, width: 150, height: 150, borderRadius: "50%", background: "radial-gradient(circle, rgba(5,150,105,0.08) 0%, transparent 70%)" }} />
           <div style={{ fontSize: 52, marginBottom: 20, position: "relative", zIndex: 1 }}>🌿</div>
-          <h2 className="serif" style={{ fontSize: "clamp(26px,4vw,44px)", fontWeight: 700, marginBottom: 16, position: "relative", zIndex: 1 }}>Start growing smarter today</h2>
-          <p style={{ fontSize: 15, color: "#475569", lineHeight: 1.8, marginBottom: 32, maxWidth: 420, margin: "0 auto 32px", position: "relative", zIndex: 1 }}>Join 12,000+ farmers using CropSage to protect their harvests. Free to start, no credit card required.</p>
-          <button className="cta-btn" style={{ fontSize: 16, padding: "16px 44px", position: "relative", zIndex: 1 }}>Create Free Account →</button>
+          <h2 className="serif" style={{ fontSize: "clamp(26px,4vw,44px)", fontWeight: 700, marginBottom: 16, position: "relative", zIndex: 1 }}>{t("home.startGrowingSmarter")}</h2>
+          <p style={{ fontSize: 15, color: "#475569", lineHeight: 1.8, marginBottom: 32, maxWidth: 420, margin: "0 auto 32px", position: "relative", zIndex: 1 }}>{t("home.joinFarmersCta")}</p>
+          <button className="cta-btn" style={{ fontSize: 16, padding: "16px 44px", position: "relative", zIndex: 1 }}>{t("home.createFreeAccount")}</button>
         </div>
       </section>
 
@@ -511,8 +513,8 @@ export default function HomePage() {
             ))}
           </div>
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: 24, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-            <p style={{ fontSize: 12, color: "#1e293b" }}>© 2025 CropSage · Built with 💚 for farmers everywhere</p>
-            <p style={{ fontSize: 12, color: "#1e293b" }}>Focused on agriculture. Always.</p>
+            <p style={{ fontSize: 12, color: "#1e293b" }}>{t("home.copyright")}</p>
+            <p style={{ fontSize: 12, color: "#1e293b" }}>{t("home.focusedOnAgriculture")}</p>
           </div>
         </div>
       </footer>

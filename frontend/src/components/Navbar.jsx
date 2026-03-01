@@ -1,9 +1,12 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useTranslation } from "react-i18next";
+import LanguageSelector from "./LanguageSelector.jsx";
 
 function Navbar() {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleSignOut = () => {
     logout();
@@ -159,19 +162,20 @@ function Navbar() {
 
           {/* Right — Actions */}
           <div className="flex items-center gap-3">
+            <LanguageSelector variant="navbar" />
             {/* Status badge */}
             <div className="hidden sm:flex items-center gap-1.5" style={{ fontSize: 12, color: "#475569" }}>
               <span style={{
                 width: 6, height: 6, borderRadius: "50%", background: "#34d399",
                 boxShadow: "0 0 6px #34d399", animation: "pulse-dot 2.5s infinite", display: "inline-block"
               }} />
-              <span style={{ color: "#334155", fontSize: 12 }}>All systems normal</span>
+              <span style={{ color: "#334155", fontSize: 12 }}>{t("common.allSystemsNormal")}</span>
             </div>
 
             <div className="navbar-divider hidden sm:block" />
 
             <button type="button" onClick={handleSignOut} className="signout-btn">
-              Sign out
+              {t("common.signOut")}
               <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M3 4.25A2.25 2.25 0 015.25 2h5.5A2.25 2.25 0 0113 4.25v2a.75.75 0 01-1.5 0v-2a.75.75 0 00-.75-.75h-5.5a.75.75 0 00-.75.75v11.5c0 .414.336.75.75.75h5.5a.75.75 0 00.75-.75v-2a.75.75 0 011.5 0v2A2.25 2.25 0 0110.75 18h-5.5A2.25 2.25 0 013 15.75V4.25z" clipRule="evenodd"/>
                 <path fillRule="evenodd" d="M19 10a.75.75 0 00-.75-.75H8.704l1.048-1.08a.75.75 0 10-1.004-1.115l-2.5 2.4a.75.75 0 000 1.09l2.5 2.4a.75.75 0 101.004-1.115l-1.048-1.08h9.546A.75.75 0 0019 10z" clipRule="evenodd"/>

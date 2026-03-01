@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useTranslation } from "react-i18next";
 
 const API_BASE = import.meta.env?.VITE_API_BASE_URL || "http://localhost:5001";
 
@@ -56,6 +57,7 @@ const inputStyle =
 
 function FertilizerRecommendation() {
   const { token } = useAuth();
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     soilType: "",
     ph: "",
@@ -79,7 +81,7 @@ function FertilizerRecommendation() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.soilType || !form.ph) {
-      setError("Please select soil type and pH.");
+      setError(t("fertilizer.selectSoilAndPh"));
       return;
     }
     setLoading(true);
@@ -102,7 +104,7 @@ function FertilizerRecommendation() {
       );
       setResult(res.data);
     } catch (err) {
-      setError(err.response?.data?.msg || "Failed to get recommendation");
+      setError(err.response?.data?.msg || t("fertilizer.failedRecommendation"));
     } finally {
       setLoading(false);
     }
@@ -115,10 +117,10 @@ function FertilizerRecommendation() {
           className="text-2xl font-bold text-slate-50"
           style={{ fontFamily: "'DM Sans', sans-serif" }}
         >
-          Fertilizer Recommendation
+          {t("fertilizer.title")}
         </h1>
         <p className="text-slate-500 text-sm mt-1">
-          Enter your soil details to get suitable crops and fertilizer type & quantity
+          {t("fertilizer.subtitle")}
         </p>
       </div>
 
@@ -135,7 +137,7 @@ function FertilizerRecommendation() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
             <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">
-              Soil type
+              {t("fertilizer.soilType")}
             </label>
             <select
               name="soilType"
@@ -144,7 +146,7 @@ function FertilizerRecommendation() {
               className={inputStyle}
               required
             >
-              <option value="">Select soil type</option>
+              <option value="">{t("fertilizer.soilTypePlaceholder")}</option>
               {SOIL_TYPES.map((o) => (
                 <option key={o.value} value={o.value}>
                   {o.label}
@@ -154,7 +156,7 @@ function FertilizerRecommendation() {
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">
-              Soil pH
+              {t("fertilizer.soilPh")}
             </label>
             <select
               name="ph"
@@ -163,7 +165,7 @@ function FertilizerRecommendation() {
               className={inputStyle}
               required
             >
-              <option value="">Select pH level</option>
+              <option value="">{t("fertilizer.soilPhPlaceholder")}</option>
               {PH_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
                   {o.label}
@@ -175,11 +177,11 @@ function FertilizerRecommendation() {
 
         <div>
           <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">
-            Nutrient levels (from experience or soil test)
+            {t("fertilizer.nutrientLevels")}
           </label>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <span className="text-slate-400 text-sm block mb-1">Nitrogen (N)</span>
+              <span className="text-slate-400 text-sm block mb-1">{t("fertilizer.nitrogen")}</span>
               <select
                 name="nitrogen"
                 value={form.nitrogen}
@@ -194,7 +196,7 @@ function FertilizerRecommendation() {
               </select>
             </div>
             <div>
-              <span className="text-slate-400 text-sm block mb-1">Phosphorus (P)</span>
+              <span className="text-slate-400 text-sm block mb-1">{t("fertilizer.phosphorus")}</span>
               <select
                 name="phosphorus"
                 value={form.phosphorus}
@@ -209,7 +211,7 @@ function FertilizerRecommendation() {
               </select>
             </div>
             <div>
-              <span className="text-slate-400 text-sm block mb-1">Potassium (K)</span>
+              <span className="text-slate-400 text-sm block mb-1">{t("fertilizer.potassium")}</span>
               <select
                 name="potassium"
                 value={form.potassium}
@@ -229,7 +231,7 @@ function FertilizerRecommendation() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
             <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">
-              Crop (optional)
+              {t("fertilizer.cropOptional")}
             </label>
             <select
               name="crop"
@@ -237,19 +239,20 @@ function FertilizerRecommendation() {
               onChange={handleChange}
               className={inputStyle}
             >
-              {CROP_OPTIONS.map((o) => (
-                <option key={o.value || "empty"} value={o.value}>
+              <option value="">{t("fertilizer.cropSuggestFirst")}</option>
+              {CROP_OPTIONS.filter((o) => o.value).map((o) => (
+                <option key={o.value} value={o.value}>
                   {o.label}
                 </option>
               ))}
             </select>
             <p className="text-xs text-slate-500 mt-1">
-              Leave as is to only see suitable crops; select a crop to get fertilizer dose
+              {t("fertilizer.cropHint")}
             </p>
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">
-              Area (acres)
+              {t("fertilizer.areaAcres")}
             </label>
             <input
               type="number"
@@ -258,25 +261,25 @@ function FertilizerRecommendation() {
               onChange={handleChange}
               min="0.1"
               step="0.1"
-              placeholder="e.g. 2"
+              placeholder={t("fertilizer.areaPlaceholder")}
               className={inputStyle}
             />
             <p className="text-xs text-slate-500 mt-1">
-              Used to calculate total fertilizer quantity
+              {t("fertilizer.areaHint")}
             </p>
           </div>
         </div>
 
         <div>
           <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">
-            Region / state (optional)
+            {t("fertilizer.regionOptional")}
           </label>
           <input
             type="text"
             name="region"
             value={form.region}
             onChange={handleChange}
-            placeholder="e.g. Odisha, Punjab"
+            placeholder={t("fertilizer.regionPlaceholder")}
             className={inputStyle}
           />
         </div>
@@ -286,7 +289,7 @@ function FertilizerRecommendation() {
           disabled={loading}
           className="w-full sm:w-auto px-6 py-2.5 rounded-xl text-sm font-semibold text-slate-900 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 disabled:cursor-not-allowed transition"
         >
-          {loading ? "Getting recommendation..." : "Get recommendation"}
+          {loading ? t("fertilizer.gettingRecommendation") : t("fertilizer.getRecommendation")}
         </button>
       </form>
 
@@ -295,11 +298,10 @@ function FertilizerRecommendation() {
           {/* Suitable crops */}
           <div className="rounded-2xl bg-slate-900/50 border border-slate-800 p-6">
             <h2 className="text-lg font-semibold text-slate-100 mb-3">
-              Suitable crops for your soil
+              {t("fertilizer.suitableCrops")}
             </h2>
             <p className="text-slate-400 text-sm mb-4">
-              Based on soil type <span className="text-emerald-400">{result.input?.soilType}</span> and pH{" "}
-              <span className="text-emerald-400">{result.input?.ph}</span>. Select one above and submit again for fertilizer details.
+              {t("fertilizer.suitableCropsDesc")}
             </p>
             <div className="flex flex-wrap gap-2">
               {result.suitableCrops?.map((c) => (
@@ -317,10 +319,10 @@ function FertilizerRecommendation() {
           {result.cropUsed && (
             <div className="rounded-2xl bg-slate-900/50 border border-slate-800 p-6">
               <h2 className="text-lg font-semibold text-slate-100 mb-2">
-                Fertilizer recommendation for {result.cropUsed}
+                {t("fertilizer.fertilizerFor")} {result.cropUsed}
               </h2>
               <p className="text-slate-500 text-sm mb-4">
-                Area: {result.areaAcres} acre(s). Adjust splits and timing as per your local practice.
+                {t("fertilizer.areaLabel")}: {result.areaAcres} {t("fertilizer.acres")}
               </p>
               <div className="space-y-4">
                 {result.fertilizerRecommendations?.length > 0 ? (
@@ -341,16 +343,16 @@ function FertilizerRecommendation() {
                       </div>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
                         <div>
-                          <span className="text-slate-500">Per acre:</span>{" "}
+                          <span className="text-slate-500">{t("fertilizer.perAcre")}:</span>{" "}
                           <span className="text-slate-200">{rec.kgPerAcre} kg</span>
                         </div>
                         <div>
-                          <span className="text-slate-500">Total ({result.areaAcres} ac):</span>{" "}
+                          <span className="text-slate-500">{t("fertilizer.total")} ({result.areaAcres} ac):</span>{" "}
                           <span className="text-slate-200 font-medium">{rec.totalKg} kg</span>
                         </div>
                       </div>
                       <p className="text-slate-400 text-sm mt-2">
-                        <span className="text-slate-500">Timing:</span> {rec.timing}
+                        <span className="text-slate-500">{t("fertilizer.timing")}:</span> {rec.timing}
                       </p>
                       {rec.note && (
                         <p className="text-slate-500 text-xs mt-1">{rec.note}</p>
@@ -359,8 +361,7 @@ function FertilizerRecommendation() {
                   ))
                 ) : (
                   <p className="text-slate-500 text-sm">
-                    Your soil nutrient levels are adequate for {result.cropUsed}. Focus on balanced
-                    maintenance and organic matter. A soil test can confirm.
+                    {t("fertilizer.soilAdequate")}
                   </p>
                 )}
               </div>
@@ -370,7 +371,7 @@ function FertilizerRecommendation() {
           {/* Tips */}
           {result.tips && result.tips.length > 0 && (
             <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-5">
-              <h3 className="text-emerald-400 font-semibold mb-2">Tips</h3>
+              <h3 className="text-emerald-400 font-semibold mb-2">{t("fertilizer.tips")}</h3>
               <ul className="text-sm text-slate-300 space-y-1 list-disc list-inside">
                 {result.tips.map((tip, i) => (
                   <li key={i}>{tip}</li>
