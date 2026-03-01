@@ -6,6 +6,7 @@ import AuthPage from "./pages/AuthPage.jsx";
 import ChatPage from "./pages/ChatPage.jsx";
 import DiseaseDetection from "./pages/DiseaseDetection.jsx";
 import ProfilePage from "./pages/ProfilePage.jsx";
+import WeatherAdvisory from "./pages/WeatherAdvisory.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
 
 function App() {
@@ -50,6 +51,11 @@ function App() {
             <Route
               path="/profile"
               element={token ? <ProfilePage /> : <Navigate to="/auth" />}
+            />
+
+            <Route
+              path="/weather"
+              element={token ? <WeatherAdvisory /> : <Navigate to="/auth" />}
             />
 
           </Routes>

@@ -633,7 +633,7 @@ function DiseaseDetection() {
     };
   })();
 
-  const confidence = result?.confidence ? Math.round(result.confidence * 100) : null;
+  const confidence = result?.confidence ? Math.round(result.confidence) * 10 : null;
 
   return (
     <>

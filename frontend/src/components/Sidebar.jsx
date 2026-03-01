@@ -36,6 +36,19 @@ const navItems = [
       </svg>
     ),
   },
+  {
+    to: "/weather",
+    label: "Weather Advisory",
+    shortLabel: "W",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+        <path fillRule="evenodd" d="M4.606 12.97a.75.75 0 01-.134 1.051 2.494 2.494 0 00-.93 2.437 2.494 2.494 0 002.437-.93.75.75 0 111.186.918 3.995 3.995 0 01-4.482 1.332.75.75 0 01-.461-.461 3.994 3.994 0 011.332-4.482.75.75 0 011.052.134z" clipRule="evenodd" />
+        <path fillRule="evenodd" d="M13.703 12.59a.75.75 0 01.75.75v.757l.55.318a.75.75 0 01-.75 1.3l-.8-.463a.75.75 0 01-.5-.707v-.955a.75.75 0 01.75-.75z" clipRule="evenodd" />
+        <path fillRule="evenodd" d="M13.75 6.5a3.75 3.75 0 00-3.75 3.75.75.75 0 01-1.5 0 5.25 5.25 0 1110.5 0 .75.75 0 01-1.5 0 3.75 3.75 0 00-3.75-3.75z" clipRule="evenodd" />
+        <path d="M7 8.5A4.5 4.5 0 002.5 13a.75.75 0 001.5 0A3 3 0 117 14a.75.75 0 000 1.5A4.5 4.5 0 107 8.5z" />
+      </svg>
+    ),
+  },
 ];
 
 function Sidebar() {
