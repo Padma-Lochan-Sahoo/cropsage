@@ -14,7 +14,7 @@
     "chatAssistant": "Chat Assistant",
     "diseaseDetection": "Disease Detection",
     "weatherAdvisory": "Weather Advisory",
-    "fertilizerRecommendation": "Fertilizer Recommendation",
+    "fertilizerRecommendation": "Crop Recommendation",
     "profile": "Profile",
     "manageAccount": "Manage account",
     "navigation": "Navigation"
@@ -152,6 +152,25 @@
     "timing": "Timing",
     "tips": "Tips",
     "soilAdequate": "Your soil nutrient levels are adequate. Focus on balanced maintenance and organic matter. A soil test can confirm."
+  },
+  "crop": {
+    "title": "Crop Recommendation",
+    "subtitle": "Enter soil nutrients and weather data to get AI-powered crop recommendations",
+    "nutrientLevels": "Soil nutrients (from soil test)",
+    "nitrogen": "Nitrogen (N)",
+    "phosphorus": "Phosphorus (P)",
+    "potassium": "Potassium (K)",
+    "weatherAndSoil": "Weather & soil",
+    "temperature": "Temperature",
+    "humidity": "Humidity",
+    "ph": "Soil pH",
+    "rainfall": "Rainfall",
+    "getRecommendation": "Get crop recommendation",
+    "gettingRecommendation": "Getting recommendation...",
+    "fillAllFields": "Please fill all fields.",
+    "failedRecommendation": "Failed to get crop recommendation",
+    "recommendedCrop": "Recommended Crop",
+    "recommendationNote": "Based on your soil nutrients and weather conditions. For best results, use values from a recent soil test."
   },
   "disease": {
     "title": "Disease Detection",

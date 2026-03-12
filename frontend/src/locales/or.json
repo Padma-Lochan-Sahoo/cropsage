@@ -14,7 +14,7 @@
     "chatAssistant": "ଚାଟ୍ ସହାୟକ",
     "diseaseDetection": "ରୋଗ ଚିହ୍ନଟ",
     "weatherAdvisory": "ମୌସୁମୀ ସଲାହ",
-    "fertilizerRecommendation": "ସାର ସୁପାରିଶ",
+    "fertilizerRecommendation": "ଫସଲ ସୁପାରିଶ",
     "profile": "ପ୍ରୋଫାଇଲ୍",
     "manageAccount": "ଖାତା ପରିଚାଳନା",
     "navigation": "ନେଭିଗେସନ୍"
@@ -152,6 +152,25 @@
     "timing": "ସମୟ",
     "tips": "ଟିପ୍ସ୍",
     "soilAdequate": "ଆପଣାର ମାଟିରେ ପୋଷକ ପର୍ଯ୍ୟାପ୍ତ। ସମତୁଲ ଯତ୍ନ ଓ ଜୈବିକ ପଦାର୍ଥ ଉପରେ ଧ୍ୟାନ ଦିଅନ୍ତୁ।"
+  },
+  "crop": {
+    "title": "ଫସଲ ସୁପାରିଶ",
+    "subtitle": "ମାଟି ପୋଷକ ଓ ମୌସୁମୀ ଡାଟା ଦାଖଲ କରନ୍ତୁ — AI ଫସଲ ସୁପାରିଶ ପାଆନ୍ତୁ",
+    "nutrientLevels": "ମାଟି ପୋଷକ (ମାଟି ପରୀକ୍ଷା ଅନୁସାରେ)",
+    "nitrogen": "ନାଇଟ୍ରୋଜେନ୍ (N)",
+    "phosphorus": "ଫସଫରସ୍ (P)",
+    "potassium": "ପୋଟାସିଅମ୍ (K)",
+    "weatherAndSoil": "ମୌସୁମୀ ଓ ମାଟି",
+    "temperature": "ତାପମାତ୍ରା",
+    "humidity": "ନିମ୍ନତା",
+    "ph": "ମାଟି pH",
+    "rainfall": "ବର୍ଷା",
+    "getRecommendation": "ଫସଲ ସୁପାରିଶ ନିଅନ୍ତୁ",
+    "gettingRecommendation": "ସୁପାରିଶ ଆସୁଛି...",
+    "fillAllFields": "ଦୟାକରି ସମସ୍ତ କ୍ଷେତ୍ର ଭର୍ତ୍ତି କରନ୍ତୁ।",
+    "failedRecommendation": "ଫସଲ ସୁପାରିଶ ମିଳିପାରିଲା ନାହିଁ",
+    "recommendedCrop": "ସୁପାରିଶ ଫସଲ",
+    "recommendationNote": "ଆପଣାର ମାଟି ପୋଷକ ଓ ମୌସୁମୀ ଅନୁସାରେ। ଭଲ ଫଳାଫଳ ପାଇଁ ନିକଟ ମାଟି ପରୀକ୍ଷା ମୂଲ୍ୟ ବ୍ୟବହାର କରନ୍ତୁ।"
   },
   "disease": {
     "title": "ରୋଗ ଚିହ୍ନଟ",

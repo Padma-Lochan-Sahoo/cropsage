@@ -14,7 +14,7 @@
     "chatAssistant": "चैट सहायक",
     "diseaseDetection": "रोग पहचान",
     "weatherAdvisory": "मौसम सलाह",
-    "fertilizerRecommendation": "उर्वरक सिफारिश",
+    "fertilizerRecommendation": "फसल सिफारिश",
     "profile": "प्रोफ़ाइल",
     "manageAccount": "खाता प्रबंधन",
     "navigation": "नेविगेशन"
@@ -152,6 +152,25 @@
     "timing": "समय",
     "tips": "टिप्स",
     "soilAdequate": "आपकी मिट्टी में पोषक पर्याप्त हैं। संतुलित देखभाल और जैविक पदार्थ पर ध्यान दें।"
+  },
+  "crop": {
+    "title": "फसल सिफारिश",
+    "subtitle": "मिट्टी पोषक और मौसम डेटा दर्ज करें — AI फसल सिफारिश पाएं",
+    "nutrientLevels": "मिट्टी पोषक (मिट्टी परीक्षण से)",
+    "nitrogen": "नाइट्रोजन (N)",
+    "phosphorus": "फॉस्फोरस (P)",
+    "potassium": "पोटैशियम (K)",
+    "weatherAndSoil": "मौसम और मिट्टी",
+    "temperature": "तापमान",
+    "humidity": "नमी",
+    "ph": "मिट्टी pH",
+    "rainfall": "वर्षा",
+    "getRecommendation": "फसल सिफारिश लें",
+    "gettingRecommendation": "सिफारिश आ रही है...",
+    "fillAllFields": "कृपया सभी क्षेत्र भरें।",
+    "failedRecommendation": "फसल सिफारिश नहीं मिल सकी",
+    "recommendedCrop": "सुझाई गई फसल",
+    "recommendationNote": "आपके मिट्टी पोषक और मौसम के आधार पर। सर्वोत्तम परिणाम के लिए हाल की मिट्टी परीक्षण मूल्यों का उपयोग करें।"
   },
   "disease": {
     "title": "रोग पहचान",

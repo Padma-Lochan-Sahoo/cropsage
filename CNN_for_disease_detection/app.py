@@ -3,11 +3,15 @@ import tensorflow as tf
 import numpy as np
 from PIL import Image
 import io
+import pickle
 
 app = Flask(__name__)
 
 # Load model ONCE
-model = tf.keras.models.load_model("trained_plant_disease_model.keras")
+model = tf.keras.models.load_model(
+    "trained_plant_disease_model.keras"
+)
+crop_recommendation_model = pickle.load(open('crop_pipeline_model.pkl', 'rb'))
 
 class_name = ['Apple___Apple_scab', 'Apple___Black_rot', 'Apple___Cedar_apple_rust', 'Apple___healthy',
                   'Blueberry___healthy', 'Cherry_(including_sour)___Powdery_mildew',
@@ -43,6 +47,37 @@ def predict():
     return jsonify({
         "disease": class_name[result_index],
         "confidence": round(confidence * 100, 2)
+    })
+
+@app.route("/recommend-crop", methods=["POST"])
+def recommend_crop():
+    N = int(request.form['Nitrogen'])
+    P = int(request.form['Phosphorus'])
+    K = int(request.form['Potassium'])
+    temperature = float(request.form['Temperature'])
+    humidity = float(request.form['Humidity'])
+    ph = float(request.form['pH'])
+    rainfall = float(request.form['Rainfall'])
+    features_list = [N,P,K,temperature,humidity,ph,rainfall]
+    single_pred = np.array(features_list).reshape(1,-1)
+    prediction = crop_recommendation_model.predict(single_pred)
+
+
+    crop_dict = {
+    1: 'rice',2: 'maize',3: 'jute',4: 'cotton',5: 'coconut',6: 'papaya',7: 'orange',
+    8: 'apple',9: 'muskmelon',10: 'watermelon',11: 'grapes',12: 'mango',13: 'banana',
+    14: 'pomegranate',15: 'lentil',16: 'blackgram',17: 'mungbean',18: 'mothbeans',
+    19: 'pigeonpeas',20: 'kidneybeans',21: 'chickpea',22: 'coffee'
+    }
+
+    if prediction[0] in crop_dict:
+        crop = crop_dict[prediction[0]]
+        result = f"{crop} is a best crop to be cultivated"
+    else:
+        result = "Sorry we are not able to recommond a proper crop in this enviroment"
+    
+    return jsonify({
+        "result": result
     })
 
 if __name__ == "__main__":
