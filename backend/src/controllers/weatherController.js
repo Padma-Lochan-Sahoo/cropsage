@@ -5,153 +5,6 @@ const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
 const OPENWEATHER_BASE_URL = "https://api.openweathermap.org/data/2.5";
 
 /**
- * Generate crop advisories based on weather conditions
- */
-function generateAdvisories(weather, forecast) {
-  const advisories = [];
-  const current = weather;
-  const temp = current.main.temp;
-  const humidity = current.main.humidity;
-  const windSpeed = current.wind.speed;
-  const weatherMain = current.weather[0]?.main?.toLowerCase() || "";
-  const weatherDesc = current.weather[0]?.description?.toLowerCase() || "";
-
-  // Temperature based advisories
-  if (temp >= 40) {
-    advisories.push({
-      type: "danger",
-      icon: "🔥",
-      title: "Extreme Heat Alert",
-      message: "Temperature is very high. Irrigate crops during early morning (5-7 AM) or late evening (6-8 PM). Consider shade nets for sensitive crops. Avoid fieldwork during peak hours.",
-      crops: ["All crops", "Vegetables", "Fruits"],
-    });
-  } else if (temp >= 35) {
-    advisories.push({
-      type: "warning",
-      icon: "☀️",
-      title: "High Temperature Warning",
-      message: "Schedule irrigation for cooler hours. Apply mulching to retain soil moisture. Monitor crops for heat stress symptoms like wilting.",
-      crops: ["Tomato", "Pepper", "Leafy vegetables"],
-    });
-  } else if (temp <= 4) {
-    advisories.push({
-      type: "danger",
-      icon: "❄️",
-      title: "Frost Warning",
-      message: "Frost conditions expected. Cover sensitive crops with cloth or plastic sheets. Apply light irrigation before sunset to protect roots. Avoid pruning.",
-      crops: ["Banana", "Papaya", "Tomato", "Chili"],
-    });
-  } else if (temp <= 10) {
-    advisories.push({
-      type: "warning",
-      icon: "🥶",
-      title: "Cold Weather Advisory",
-      message: "Low temperatures may slow crop growth. Consider row covers for sensitive seedlings. Delay transplanting until weather improves.",
-      crops: ["Seedlings", "Young transplants"],
-    });
-  }
-
-  // Rain based advisories
-  if (weatherMain.includes("rain") || weatherMain.includes("drizzle")) {
-    if (weatherDesc.includes("heavy") || weatherDesc.includes("extreme")) {
-      advisories.push({
-        type: "danger",
-        icon: "🌧️",
-        title: "Heavy Rain Alert",
-        message: "Ensure proper drainage in fields. Postpone fertilizer and pesticide application. Check for waterlogging. Support tall crops to prevent lodging.",
-        crops: ["Paddy", "Sugarcane", "Maize"],
-      });
-    } else {
-      advisories.push({
-        type: "info",
-        icon: "🌦️",
-        title: "Rain Expected",
-        message: "Good conditions for crop growth. Skip irrigation today. Delay pesticide spraying by 24-48 hours. Monitor for fungal diseases after rain.",
-        crops: ["All crops"],
-      });
-    }
-  }
-
-  // Humidity based advisories
-  if (humidity >= 85) {
-    advisories.push({
-      type: "warning",
-      icon: "💧",
-      title: "High Humidity Alert",
-      message: "High humidity increases disease risk. Monitor crops for fungal infections (blight, mildew, rust). Ensure adequate plant spacing for air circulation. Apply preventive fungicides if needed.",
-      crops: ["Tomato", "Potato", "Grapes", "Onion"],
-    });
-  }
-
-  // Wind based advisories
-  if (windSpeed >= 15) {
-    advisories.push({
-      type: "warning",
-      icon: "💨",
-      title: "Strong Wind Warning",
-      message: "Stake young plants and tall crops. Avoid pesticide spraying (drift risk). Check greenhouse/polyhouse structures. Delay irrigation with sprinklers.",
-      crops: ["Banana", "Sugarcane", "Maize", "Vegetables"],
-    });
-  }
-
-  // Thunderstorm advisory
-  if (weatherMain.includes("thunderstorm")) {
-    advisories.push({
-      type: "danger",
-      icon: "⛈️",
-      title: "Thunderstorm Alert",
-      message: "Seek shelter immediately. Avoid open fields and isolated trees. Postpone all field activities. Secure loose equipment and materials.",
-      crops: ["All crops"],
-    });
-  }
-
-  // Check forecast for upcoming conditions
-  if (forecast && forecast.list) {
-    const next24h = forecast.list.slice(0, 8);
-    const hasUpcomingRain = next24h.some(
-      (f) =>
-        f.weather[0]?.main?.toLowerCase().includes("rain") ||
-        f.weather[0]?.main?.toLowerCase().includes("thunderstorm")
-    );
-    const maxTempNext24h = Math.max(...next24h.map((f) => f.main.temp));
-    const minTempNext24h = Math.min(...next24h.map((f) => f.main.temp));
-
-    if (hasUpcomingRain && !weatherMain.includes("rain")) {
-      advisories.push({
-        type: "info",
-        icon: "📅",
-        title: "Rain Expected Soon",
-        message: "Rain predicted in the next 24 hours. Complete pending pesticide/fertilizer applications today. Harvest mature crops if possible.",
-        crops: ["All crops"],
-      });
-    }
-
-    if (minTempNext24h <= 4 && temp > 4) {
-      advisories.push({
-        type: "warning",
-        icon: "📉",
-        title: "Temperature Drop Expected",
-        message: "Frost conditions expected soon. Prepare protective covers. Apply potassium-based fertilizers to improve cold tolerance.",
-        crops: ["Frost-sensitive crops"],
-      });
-    }
-  }
-
-  // Default good weather advisory
-  if (advisories.length === 0) {
-    advisories.push({
-      type: "success",
-      icon: "✅",
-      title: "Favorable Conditions",
-      message: "Weather conditions are good for most farming activities. Ideal time for sowing, transplanting, or fertilizer application.",
-      crops: ["All crops"],
-    });
-  }
-
-  return advisories;
-}
-
-/**
  * GET /api/weather
  * Get weather data and advisories for user's farm location
  */
@@ -198,9 +51,6 @@ export const getWeatherAdvisory = async (req, res) => {
     const weather = weatherRes.data;
     const forecast = forecastRes.data;
 
-    // Generate advisories
-    const advisories = generateAdvisories(weather, forecast);
-
     res.json({
       location: {
         name: weather.name,
@@ -232,7 +82,6 @@ export const getWeatherAdvisory = async (req, res) => {
         wind_speed: f.wind.speed,
         pop: f.pop,
       })),
-      advisories,
       fetchedAt: new Date().toISOString(),
     });
   } catch (err) {
@@ -332,7 +181,6 @@ export const getWeatherByLocation = async (req, res) => {
 
     const weather = weatherRes.data;
     const forecast = forecastRes.data;
-    const advisories = generateAdvisories(weather, forecast);
 
     res.json({
       location: {
@@ -347,7 +195,6 @@ export const getWeatherByLocation = async (req, res) => {
         wind_speed: weather.wind.speed,
         weather: weather.weather[0],
       },
-      advisories,
     });
   } catch (err) {
     if (err.response?.status === 404) {
