@@ -122,19 +122,6 @@ function WeatherAdvisory() {
     return `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
   };
 
-  const getAdvisoryStyle = (type) => {
-    switch (type) {
-      case "danger":
-        return "bg-red-500/15 border-red-500/30 text-red-300";
-      case "warning":
-        return "bg-amber-500/15 border-amber-500/30 text-amber-300";
-      case "success":
-        return "bg-emerald-500/15 border-emerald-500/30 text-emerald-300";
-      default:
-        return "bg-sky-500/15 border-sky-500/30 text-sky-300";
-    }
-  };
-
   const inputStyle =
     "w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition";
 
@@ -246,7 +233,7 @@ function WeatherAdvisory() {
 
   if (!data) return null;
 
-  const { location, current, forecast, advisories } = data;
+  const { location, current, forecast } = data;
 
   return (
     <div className="max-w-4xl mx-auto py-6 px-4 space-y-6">
@@ -356,45 +343,6 @@ function WeatherAdvisory() {
               Sunset: {formatTime(current.sunset)}
             </span>
           </div>
-        </div>
-      </div>
-
-      {/* Advisories */}
-      <div>
-        <h2 className="text-lg font-semibold text-slate-100 mb-4">
-          🌾 {t("weather.cropAdvisories")}
-        </h2>
-        <div className="space-y-3">
-          {advisories.map((advisory, idx) => (
-            <div
-              key={idx}
-              className={`rounded-xl border p-4 ${getAdvisoryStyle(
-                advisory.type
-              )}`}
-            >
-              <div className="flex items-start gap-3">
-                <span className="text-2xl">{advisory.icon}</span>
-                <div className="flex-1">
-                  <h3 className="font-semibold mb-1">{advisory.title}</h3>
-                  <p className="text-sm opacity-90 leading-relaxed">
-                    {advisory.message}
-                  </p>
-                  {advisory.crops && advisory.crops.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {advisory.crops.map((crop, i) => (
-                        <span
-                          key={i}
-                          className="text-xs px-2 py-0.5 rounded-full bg-white/10"
-                        >
-                          {crop}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
 
