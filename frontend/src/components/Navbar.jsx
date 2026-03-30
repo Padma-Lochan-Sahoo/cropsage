@@ -103,7 +103,7 @@ function Navbar() {
           background: transparent;
           border: 1px solid rgba(148,163,184,0.1);
           border-radius: 8px;
-          padding: 6px 13px;
+          padding: 6px 10px;
           cursor: pointer;
           transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
           letter-spacing: 0.01em;
@@ -141,6 +141,16 @@ function Navbar() {
           padding: 1px 5px;
           text-transform: uppercase;
         }
+
+        @media (max-width: 640px) {
+          .navbar-wordmark {
+            font-size: 14px;
+          }
+
+          .signout-btn {
+            padding: 6px 8px;
+          }
+        }
       `}</style>
 
       <nav className="navbar-root fixed inset-x-0 top-0 z-40 border-b border-slate-800/70"
@@ -152,16 +162,16 @@ function Navbar() {
           background: "linear-gradient(90deg, transparent 0%, rgba(52,211,153,0.3) 30%, rgba(52,211,153,0.3) 70%, transparent 100%)"
         }} />
 
-        <div className="max-w-6xl mx-auto px-4 flex items-center justify-between" style={{ height: 56 }}>
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 flex items-center justify-between" style={{ height: 56 }}>
 
           {/* Left — Logo */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <div className="navbar-logo-icon">CS</div>
             <span className="navbar-wordmark">Crop<span>Sage</span></span>
           </div>
 
           {/* Right — Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <LanguageSelector variant="navbar" />
             {/* Status badge */}
             <div className="hidden sm:flex items-center gap-1.5" style={{ fontSize: 12, color: "#475569" }}>
@@ -175,7 +185,7 @@ function Navbar() {
             <div className="navbar-divider hidden sm:block" />
 
             <button type="button" onClick={handleSignOut} className="signout-btn">
-              {t("common.signOut")}
+              <span className="hidden sm:inline">{t("common.signOut")}</span>
               <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M3 4.25A2.25 2.25 0 015.25 2h5.5A2.25 2.25 0 0113 4.25v2a.75.75 0 01-1.5 0v-2a.75.75 0 00-.75-.75h-5.5a.75.75 0 00-.75.75v11.5c0 .414.336.75.75.75h5.5a.75.75 0 00.75-.75v-2a.75.75 0 011.5 0v2A2.25 2.25 0 0110.75 18h-5.5A2.25 2.25 0 013 15.75V4.25z" clipRule="evenodd"/>
                 <path fillRule="evenodd" d="M19 10a.75.75 0 00-.75-.75H8.704l1.048-1.08a.75.75 0 10-1.004-1.115l-2.5 2.4a.75.75 0 000 1.09l2.5 2.4a.75.75 0 101.004-1.115l-1.048-1.08h9.546A.75.75 0 0019 10z" clipRule="evenodd"/>

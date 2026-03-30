@@ -255,7 +255,9 @@ function ChatPage() {
   const [loadingConversations, setLoadingConversations] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [error, setError] = useState(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(
+    typeof window !== "undefined" ? window.innerWidth >= 1024 : true
+  );
   const bottomRef = useRef(null);
   const textareaRef = useRef(null);
 
@@ -281,6 +283,16 @@ function ChatPage() {
   }, [token, authHeaders]);
 
   useEffect(() => { fetchConversations(); }, [fetchConversations]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setSidebarOpen(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const fetchMessages = useCallback(async (conversationId) => {
     if (!token || !conversationId) { setMessages([]); return; }
@@ -467,8 +479,16 @@ function ChatPage() {
                 key={c._id}
                 role="button"
                 tabIndex={0}
-                onClick={() => setActiveId(c._id)}
-                onKeyDown={(e) => e.key === "Enter" && setActiveId(c._id)}
+                onClick={() => {
+                  setActiveId(c._id);
+                  if (window.innerWidth < 1024) setSidebarOpen(false);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    setActiveId(c._id);
+                    if (window.innerWidth < 1024) setSidebarOpen(false);
+                  }
+                }}
                 className={`group flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-left text-sm cursor-pointer transition-all duration-150 ${
                   activeId === c._id
                     ? "bg-emerald-950/50 text-emerald-300 border border-emerald-800/50"
@@ -567,7 +587,7 @@ function ChatPage() {
                       </div>
                     )}
 
-                    <div className={`max-w-[85%] ${msg.role === "user" ? "" : "flex-1"}`}>
+                    <div className={`max-w-[92%] sm:max-w-[85%] ${msg.role === "user" ? "" : "flex-1"}`}>
                       <div
                         className={`rounded-2xl px-4 py-3 ${
                           msg.role === "user"

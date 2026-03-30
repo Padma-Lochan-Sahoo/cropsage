@@ -243,7 +243,7 @@ function Sidebar() {
       `}</style>
 
       <aside
-        className="sidebar-root fixed left-0 top-16 bottom-0 w-52 border-r border-slate-800/80 bg-slate-950/95 backdrop-blur-xl flex flex-col"
+        className="sidebar-root hidden md:flex fixed left-0 top-16 bottom-0 w-52 border-r border-slate-800/80 bg-slate-950/95 backdrop-blur-xl flex-col"
         style={{ backdropFilter: "blur(20px)" }}
       >
         {/* Top glow */}

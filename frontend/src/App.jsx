@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar.jsx";
 import Sidebar from "./components/Sidebar.jsx";
+import MobileNav from "./components/MobileNav.jsx";
 import HomePage from "./pages/HomePage.jsx";
 import AuthPage from "./pages/AuthPage.jsx";
 import ChatPage from "./pages/ChatPage.jsx";
@@ -20,7 +21,7 @@ function App() {
         {token && <Navbar />}
         {token && <Sidebar />}
 
-        <main className="flex-1 pt-16 pl-52">
+        <main className="flex-1 pt-16 pb-16 md:pb-0 md:pl-52">
           <Routes>
 
             {/* Default Route */}
@@ -66,6 +67,7 @@ function App() {
 
           </Routes>
         </main>
+        {token && <MobileNav />}
       </div>
     </BrowserRouter>
   );
