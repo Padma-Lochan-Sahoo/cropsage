@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { NavLink, Link } from "react-router-dom";
 import axios from "axios";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "../context/AuthContext.jsx";
 
 const API_BASE = import.meta.env?.VITE_API_BASE_URL || "http://localhost:5001";
 
@@ -44,7 +45,7 @@ const navItems = [
 
 function Sidebar() {
   const [user, setUser] = useState(null);
-  const token = localStorage.getItem("authToken");
+  const { token } = useAuth();
   const { t } = useTranslation();
 
   useEffect(() => {
