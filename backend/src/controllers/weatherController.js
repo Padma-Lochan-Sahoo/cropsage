@@ -1,8 +1,10 @@
 import axios from "axios";
+import OpenAI from "openai";
 import User from "../models/User.js";
 
 const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
 const OPENWEATHER_BASE_URL = "https://api.openweathermap.org/data/2.5";
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 /**
  * GET /api/weather
@@ -201,5 +203,71 @@ export const getWeatherByLocation = async (req, res) => {
       return res.status(400).json({ msg: "Location not found" });
     }
     res.status(500).json({ msg: "Failed to fetch weather data" });
+  }
+};
+
+/**
+ * POST /api/weather/crop-suggestions
+ * Body: weather payload returned by GET /api/weather
+ * Uses OpenAI to suggest 3-4 crops suitable for current + short forecast.
+ */
+export const getCropSuggestionsFromWeather = async (req, res) => {
+  try {
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(500).json({
+        msg: "OpenAI service not configured. Please add OPENAI_API_KEY.",
+      });
+    }
+
+    const { weatherData } = req.body || {};
+    if (!weatherData?.current || !Array.isArray(weatherData?.forecast)) {
+      return res.status(400).json({
+        msg: "weatherData with current and forecast is required",
+      });
+    }
+
+    const compactWeather = {
+      location: weatherData.location || null,
+      current: weatherData.current,
+      forecast: weatherData.forecast.slice(0, 16),
+    };
+
+    const completion = await openai.chat.completions.create({
+      model: process.env.OPENAI_CHAT_MODEL || "gpt-4o-mini",
+      response_format: { type: "json_object" },
+      temperature: 0.2,
+      max_tokens: 320,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are an agriculture weather advisor for Indian farmers. " +
+            "Based on provided weather data, suggest exactly 3 or 4 crops suitable for cultivation now. " +
+            "Return only JSON with keys: summary (string), crops (array). " +
+            "Each crops item must have: name (string), reason (string, max 20 words). " +
+            "Keep output concise and practical.",
+        },
+        {
+          role: "user",
+          content: JSON.stringify(compactWeather),
+        },
+      ],
+    });
+
+    const content = completion.choices?.[0]?.message?.content?.trim() || "{}";
+    let parsed = JSON.parse(content);
+
+    if (!Array.isArray(parsed.crops)) {
+      parsed.crops = [];
+    }
+    parsed.crops = parsed.crops.slice(0, 4);
+
+    return res.json({
+      summary: parsed.summary || "Suggested crops based on current weather.",
+      crops: parsed.crops,
+    });
+  } catch (err) {
+    console.error("Weather crop suggestions error:", err.message || err);
+    return res.status(500).json({ msg: "Failed to generate crop suggestions" });
   }
 };

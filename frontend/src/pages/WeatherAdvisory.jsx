@@ -20,6 +20,9 @@ function WeatherAdvisory() {
   const [locating, setLocating] = useState(false);
   const [savingLocation, setSavingLocation] = useState(false);
   const [locationError, setLocationError] = useState("");
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [cropSuggestions, setCropSuggestions] = useState(null);
+  const [suggestionsError, setSuggestionsError] = useState("");
 
   const fetchWeather = async () => {
     try {
@@ -32,6 +35,8 @@ function WeatherAdvisory() {
       setNeedsLocation(false);
       setEditingLocation(false);
       setSavingLocation(false);
+      setCropSuggestions(null);
+      setSuggestionsError("");
     } catch (err) {
       if (err.response?.data?.needsLocation) {
         setNeedsLocation(true);
@@ -40,6 +45,26 @@ function WeatherAdvisory() {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGetCropSuggestions = async () => {
+    if (!data) return;
+    try {
+      setSuggestionsLoading(true);
+      setSuggestionsError("");
+      const res = await axios.post(
+        `${API_BASE}/api/weather/crop-suggestions`,
+        { weatherData: data },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setCropSuggestions(res.data);
+    } catch (err) {
+      setSuggestionsError(
+        err.response?.data?.msg || "Failed to get crop suggestions"
+      );
+    } finally {
+      setSuggestionsLoading(false);
     }
   };
 
@@ -269,8 +294,42 @@ function WeatherAdvisory() {
           >
             {t("weather.changeLocation")}
           </button>
+          <button
+            onClick={handleGetCropSuggestions}
+            disabled={suggestionsLoading}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-900 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 disabled:cursor-not-allowed transition"
+          >
+            {suggestionsLoading ? "Getting..." : "Crop Suggestions"}
+          </button>
         </div>
       </div>
+
+      {(cropSuggestions || suggestionsError) && (
+        <div className="rounded-2xl bg-slate-900/50 border border-slate-800 p-4">
+          {suggestionsError ? (
+            <p className="text-red-300 text-sm">{suggestionsError}</p>
+          ) : (
+            <>
+              <p className="text-emerald-300 text-sm font-medium mb-3">
+                {cropSuggestions?.summary}
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {(cropSuggestions?.crops || []).map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="rounded-xl border border-slate-700 bg-slate-800/40 p-3"
+                  >
+                    <p className="text-slate-100 font-semibold text-sm">
+                      {item.name}
+                    </p>
+                    <p className="text-slate-400 text-xs mt-1">{item.reason}</p>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Current Weather Card */}
       <div className="rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 p-6">
