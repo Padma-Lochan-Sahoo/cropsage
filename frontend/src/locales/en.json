@@ -17,7 +17,8 @@
     "fertilizerRecommendation": "Crop Recommendation",
     "profile": "Profile",
     "manageAccount": "Manage account",
-    "navigation": "Navigation"
+    "navigation": "Navigation",
+    "costProfitCalculator": "Cost & Profit"
   },
   "auth": {
     "signIn": "Sign In",

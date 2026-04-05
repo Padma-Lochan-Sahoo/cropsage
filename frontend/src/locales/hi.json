@@ -17,7 +17,8 @@
     "fertilizerRecommendation": "फसल सिफारिश",
     "profile": "प्रोफ़ाइल",
     "manageAccount": "खाता प्रबंधन",
-    "navigation": "नेविगेशन"
+    "navigation": "नेविगेशन",
+    "costProfitCalculator": "लागत और लाभ"
   },
   "auth": {
     "signIn": "साइन इन",

@@ -9,10 +9,13 @@ const LANGUAGES = [
 function LanguageSelector({ className = "", variant = "navbar" }) {
   const { t, i18n } = useTranslation();
 
-  const baseClass =
-    "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium border transition cursor-pointer";
   const isCompact = variant === "compact";
   const isAuth = variant === "auth";
+  const isAuthCard = variant === "authCard";
+
+  const baseClass = isAuthCard
+    ? "flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-medium border transition cursor-pointer whitespace-nowrap"
+    : "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium border transition cursor-pointer";
 
   return (
     <div className={`relative group ${className}`}>
@@ -21,24 +24,27 @@ function LanguageSelector({ className = "", variant = "navbar" }) {
         className={`${baseClass} ${
           variant === "navbar"
             ? "bg-slate-800/60 border-slate-700 text-slate-300 hover:border-emerald-500/40 hover:text-emerald-400"
-            : isAuth
+            : isAuth || isAuthCard
             ? "bg-white/5 border-white/10 text-slate-300 hover:border-emerald-500/30 hover:text-emerald-400"
             : "bg-white/5 border-white/10 text-slate-300 hover:border-emerald-500/30 hover:text-emerald-400"
         }`}
         aria-label={t("common.language")}
       >
-        <span className="text-base leading-none" aria-hidden>
+        <span
+          className={`leading-none flex-shrink-0 ${isAuthCard ? "text-sm" : "text-base"}`}
+          aria-hidden
+        >
           🌐
         </span>
         {!isCompact && (
-          <span className="max-w-[80px] truncate">
+          <span className={isAuthCard ? "max-w-[72px] truncate" : "max-w-[80px] truncate"}>
             {LANGUAGES.find((l) => l.code === i18n.language)?.code === "en"
               ? "English"
               : t(LANGUAGES.find((l) => l.code === i18n.language)?.labelKey || "languages.en")}
           </span>
         )}
         <svg
-          className="w-3.5 h-3.5 opacity-70"
+          className={`${isAuthCard ? "w-3 h-3" : "w-3.5 h-3.5"} opacity-70 flex-shrink-0`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"

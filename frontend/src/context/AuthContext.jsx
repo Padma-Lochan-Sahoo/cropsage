@@ -9,6 +9,7 @@ export function AuthProvider({ children }) {
     token: null,
     userId: null,
   });
+  const [isReady, setIsReady] = useState(false);
 
   const isTokenExpired = (token) => {
     try {
@@ -23,22 +24,22 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const storedToken = localStorage.getItem("authToken");
-    if (!storedToken) return;
-
-    if (isTokenExpired(storedToken)) {
-      localStorage.removeItem("authToken");
-      return;
+    if (storedToken) {
+      if (isTokenExpired(storedToken)) {
+        localStorage.removeItem("authToken");
+      } else {
+        try {
+          const decoded = jwtDecode(storedToken);
+          setAuth({
+            token: storedToken,
+            userId: decoded?.user?.id ?? null,
+          });
+        } catch {
+          localStorage.removeItem("authToken");
+        }
+      }
     }
-
-    try {
-      const decoded = jwtDecode(storedToken);
-      setAuth({
-        token: storedToken,
-        userId: decoded?.user?.id ?? null,
-      });
-    } catch {
-      localStorage.removeItem("authToken");
-    }
+    setIsReady(true);
   }, []);
 
   const login = (token) => {
@@ -86,7 +87,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ ...auth, login, logout }}>
+    <AuthContext.Provider value={{ ...auth, login, logout, isReady }}>
       {children}
     </AuthContext.Provider>
   );

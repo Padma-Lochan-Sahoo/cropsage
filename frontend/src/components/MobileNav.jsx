@@ -1,10 +1,10 @@
 import { NavLink } from "react-router-dom";
 
 const items = [
-  { to: "/home", label: "Home", icon: "🏠" },
   { to: "/chat", label: "Chat", icon: "💬" },
   { to: "/disease-detection", label: "Disease", icon: "🔬" },
   { to: "/weather", label: "Weather", icon: "🌤️" },
+  { to: "/fertilizer", label: "Fertilizer", icon: "📋" },
   { to: "/profile", label: "Profile", icon: "👤" },
 ];
 
