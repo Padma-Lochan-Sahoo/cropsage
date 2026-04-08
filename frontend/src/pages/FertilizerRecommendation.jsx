@@ -23,6 +23,27 @@ function FertilizerRecommendation() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState(null);
+  const guide = result?.cultivationGuide;
+
+  const renderList = (items, maxItems = 4) => {
+    if (!Array.isArray(items) || items.length === 0) return null;
+    const slice = items.slice(0, maxItems);
+    const remaining = items.length - slice.length;
+    return (
+      <>
+        <ul className="list-disc pl-5 space-y-1 text-slate-300 text-sm leading-relaxed">
+          {slice.map((item, idx) => (
+            <li key={idx}>{item}</li>
+          ))}
+        </ul>
+        {remaining > 0 ? (
+          <p className="text-[11px] text-slate-500 mt-1">
+            Showing first {maxItems} items (+{remaining} more in full guide)
+          </p>
+        ) : null}
+      </>
+    );
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -228,7 +249,7 @@ function FertilizerRecommendation() {
       </form>
 
       {result && (
-        <div className="rounded-2xl bg-slate-900/50 border border-slate-800 p-6">
+        <div className="rounded-2xl bg-slate-900/50 border border-slate-800 p-6 space-y-5">
           <h2 className="text-lg font-semibold text-slate-100 mb-3">
             {t("crop.recommendedCrop")}
           </h2>
@@ -238,6 +259,75 @@ function FertilizerRecommendation() {
           <p className="text-slate-500 text-sm mt-3">
             {t("crop.recommendationNote")}
           </p>
+
+          {guide && (
+            <div className="mt-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-5 space-y-4">
+              <h3 className="text-xl font-semibold text-emerald-300">
+                Quick cultivation plan for{" "}
+                {result.crop || "recommended crop"}
+              </h3>
+
+              {guide.overview && (
+                <p className="text-slate-200 text-sm leading-relaxed">
+                  {guide.overview}
+                </p>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="text-sm font-semibold text-slate-100 mb-1">
+                    Land prep (key steps)
+                  </h4>
+                  {renderList(guide.land_preparation, 3)}
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-slate-100 mb-1">
+                    Sowing plan
+                  </h4>
+                  {renderList(guide.sowing_plan, 3)}
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-slate-100 mb-1">
+                    Fertilizer & nutrients
+                  </h4>
+                  {renderList(guide.nutrient_plan, 3)}
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-slate-100 mb-1">
+                    Irrigation
+                  </h4>
+                  {renderList(guide.irrigation_plan, 3)}
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-slate-100 mb-1">
+                    Weed & pest basics
+                  </h4>
+                  {renderList(guide.weed_and_pest_management, 3)}
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-slate-100 mb-1">
+                    Disease prevention
+                  </h4>
+                  {renderList(guide.disease_management, 3)}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="text-sm font-semibold text-slate-100 mb-1">
+                    Harvest & post-harvest
+                  </h4>
+                  {renderList(guide.harvesting_and_post_harvest, 3)}
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-slate-100 mb-1">
+                    Avoid common mistakes
+                  </h4>
+                  {renderList(guide.mistakes_to_avoid, 3)}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

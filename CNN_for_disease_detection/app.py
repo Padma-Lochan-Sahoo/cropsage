@@ -1,7 +1,8 @@
 from flask import Flask, request, jsonify
 import tensorflow as tf
+from tensorflow.keras.preprocessing import image as keras_image
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageOps
 import io
 import pickle
 
@@ -28,25 +29,62 @@ class_name = ['Apple___Apple_scab', 'Apple___Black_rot', 'Apple___Cedar_apple_ru
                   'Tomato___Target_Spot', 'Tomato___Tomato_Yellow_Leaf_Curl_Virus', 'Tomato___Tomato_mosaic_virus',
                   'Tomato___healthy']
 
+def _prepare_image(file_storage):
+    """
+    Match training: RGB, 128x128, float32, values in [0, 1] (see Train_plant_disease.ipynb).
+    """
+    raw = file_storage.read()
+    if not raw:
+        raise ValueError("Empty image upload")
+    img = Image.open(io.BytesIO(raw))
+    # Phone photos: fix orientation so the leaf is not sideways to the model
+    img = ImageOps.exif_transpose(img)
+    img = img.convert("RGB")
+    try:
+        resample = Image.Resampling.LANCZOS
+    except AttributeError:
+        resample = Image.LANCZOS
+    img = img.resize((128, 128), resample)
+    arr = keras_image.img_to_array(img)
+    arr = np.expand_dims(arr, axis=0)
+    arr = arr.astype("float32") / 255.0
+    return arr
+
+
 @app.route("/predict", methods=["POST"])
 def predict():
     if "image" not in request.files:
         return jsonify({"error": "No image uploaded"}), 400
     file = request.files["image"]
 
-    image = Image.open(file)
-    image = image.resize((128, 128))
-    image = np.array(image) / 255.0
-    image = np.expand_dims(image, axis=0)
+    try:
+        batch = _prepare_image(file)
+    except Exception as e:
+        return jsonify({"error": f"Invalid image: {str(e)}"}), 400
 
-    predictions = model.predict(image)
+    # batch shape: (1, 128, 128, 3)
+    predictions = model.predict(batch, verbose=0)
+    probs = np.asarray(predictions[0], dtype=np.float64).reshape(-1)
 
-    result_index = np.argmax(predictions)
-    confidence = float(np.max(predictions))
+    n_classes = len(class_name)
+    if probs.size != n_classes:
+        return jsonify({
+            "error": f"Model output size {probs.size} does not match class list ({n_classes})",
+        }), 500
+
+    result_index = int(np.argmax(probs))
+    confidence = float(np.max(probs))
+
+    top_indices = np.argsort(probs)[::-1][:3]
+    top_predictions = [
+        {"disease": class_name[i], "confidence": round(float(probs[i]) * 100, 2)}
+        for i in top_indices
+    ]
 
     return jsonify({
         "disease": class_name[result_index],
-        "confidence": round(confidence * 100, 2)
+        "confidence": round(confidence * 100, 2),
+        "top_predictions": top_predictions,
     })
 
 @app.route("/recommend-crop", methods=["POST"])

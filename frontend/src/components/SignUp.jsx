@@ -2,6 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import { GoogleLogin } from "@react-oauth/google";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useTranslation } from "react-i18next";
 
@@ -11,6 +12,7 @@ function SignUp() {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const handleChange = (evt) => {
     const { name, value } = evt.target;
@@ -27,7 +29,7 @@ function SignUp() {
         { username, email, password }
       );
       login(response.data.token);
-      window.location.href = "/home";
+      navigate("/chat", { replace: true });
     } catch (error) {
       console.error("There was an error signing up!", error);
       alert(t("auth.signupFailed"));
@@ -43,7 +45,7 @@ function SignUp() {
         token: response.credential,
       });
       login(res.data.token);
-      window.location.href = "/home";
+      navigate("/chat", { replace: true });
     } catch (error) {
       console.error("Google signup error:", error);
       alert(t("auth.googleLoginFailed"));

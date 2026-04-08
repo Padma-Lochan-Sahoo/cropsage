@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "../context/AuthContext.jsx";
+import LanguageSelector from "../components/LanguageSelector.jsx";
 
 /* ─── Typewriter ─── */
 const CROPS = ["Wheat 🌾", "Rice 🌿", "Corn 🌽", "Tomato 🍅", "Soybean 🫘", "Cotton 🌸"];
@@ -139,9 +142,65 @@ function Marquee({ items }) {
   );
 }
 
+function LandingNavBar() {
+  const { t } = useTranslation();
+  return (
+    <header
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 30,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "14px 24px",
+        background: "rgba(3,7,18,0.75)",
+        backdropFilter: "blur(16px)",
+        borderBottom: "1px solid rgba(52,211,153,0.12)",
+      }}
+    >
+      <Link
+        to="/"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          textDecoration: "none",
+          color: "#f1f5f9",
+        }}
+      >
+        <span style={{ fontSize: 26 }}>🌾</span>
+        <span className="serif" style={{ fontSize: 20, fontWeight: 700, color: "#34d399" }}>
+          CropSage
+        </span>
+      </Link>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", justifyContent: "flex-end" }}>
+        <LanguageSelector variant="auth" />
+        <Link
+          to="/auth?mode=signIn"
+          className="ghost-btn"
+          style={{ padding: "10px 20px", fontSize: 13, textDecoration: "none", display: "inline-flex", alignItems: "center" }}
+        >
+          {t("auth.signIn")}
+        </Link>
+        <Link
+          to="/auth?mode=signUp"
+          className="cta-btn"
+          style={{ padding: "10px 22px", fontSize: 13, textDecoration: "none", display: "inline-flex", alignItems: "center" }}
+        >
+          {t("auth.signUp")}
+        </Link>
+      </div>
+    </header>
+  );
+}
+
 export default function HomePage() {
   const crop = useTypewriter(CROPS);
   const { t } = useTranslation();
+  const { token } = useAuth();
   const [tab, setTab] = useState(0);
   const [statsOn, setStatsOn] = useState(false);
   const statsRef = useRef();
@@ -157,8 +216,11 @@ export default function HomePage() {
 
   const f = FEATURES[tab];
 
+  const guestTopPad = !token ? 72 : 0;
+
   return (
     <div style={{ background: "#030712", color: "#f1f5f9", minHeight: "100vh", fontFamily: "'DM Sans', sans-serif", overflowX: "hidden", position: "relative" }}>
+      {!token && <LandingNavBar />}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600;700&display=swap');
         .serif { font-family: 'Playfair Display', serif; }
@@ -227,7 +289,7 @@ export default function HomePage() {
       <Blobs />
 
       {/* ══ HERO ══ */}
-      <section style={{ position: "relative", zIndex: 1, minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 24px 60px", textAlign: "center" }}>
+      <section style={{ position: "relative", zIndex: 1, minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: `${guestTopPad + 80}px 24px 60px`, textAlign: "center" }}>
 
         {/* BIG Welcome Badge */}
         <div style={{ animation: "fadeUp 0.5s ease both", marginBottom: 36 }}>
@@ -264,8 +326,10 @@ export default function HomePage() {
 
         {/* CTAs */}
         <div style={{ animation: "fadeUp 0.6s 0.4s ease both", opacity: 0, animationFillMode: "forwards", display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center", marginBottom: 64 }}>
-          <button className="cta-btn">{t("home.getStartedFree")}</button>
-          <button className="ghost-btn">{t("home.watchDemo")}</button>
+          <Link to="/auth?mode=signUp" className="cta-btn" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center" }}>
+            {t("home.getStartedFree")}
+          </Link>
+          <button type="button" className="ghost-btn">{t("home.watchDemo")}</button>
         </div>
 
         {/* Hero dashboard cards */}
@@ -471,7 +535,13 @@ export default function HomePage() {
           <div style={{ fontSize: 52, marginBottom: 20, position: "relative", zIndex: 1 }}>🌿</div>
           <h2 className="serif" style={{ fontSize: "clamp(26px,4vw,44px)", fontWeight: 700, marginBottom: 16, position: "relative", zIndex: 1 }}>{t("home.startGrowingSmarter")}</h2>
           <p style={{ fontSize: 15, color: "#475569", lineHeight: 1.8, marginBottom: 32, maxWidth: 420, margin: "0 auto 32px", position: "relative", zIndex: 1 }}>{t("home.joinFarmersCta")}</p>
-          <button className="cta-btn" style={{ fontSize: 16, padding: "16px 44px", position: "relative", zIndex: 1 }}>{t("home.createFreeAccount")}</button>
+          <Link
+            to="/auth?mode=signUp"
+            className="cta-btn"
+            style={{ fontSize: 16, padding: "16px 44px", position: "relative", zIndex: 1, textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center" }}
+          >
+            {t("home.createFreeAccount")}
+          </Link>
         </div>
       </section>
 

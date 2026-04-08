@@ -1,17 +1,27 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import SignIn from "../components/SignIn.jsx";
 import SignUp from "../components/SignUp.jsx";
 import { useTranslation } from "react-i18next";
 import LanguageSelector from "../components/LanguageSelector.jsx";
 
 function AuthPage() {
-  const [mode, setMode] = useState("signIn");
+  const [searchParams] = useSearchParams();
+  const urlMode = searchParams.get("mode");
+  const [mode, setMode] = useState(
+    urlMode === "signUp" || urlMode === "signIn" ? urlMode : "signIn"
+  );
   const isSignIn = mode === "signIn";
   const { t } = useTranslation();
 
+  useEffect(() => {
+    const m = searchParams.get("mode");
+    if (m === "signUp" || m === "signIn") setMode(m);
+  }, [searchParams]);
+
   return (
     <div
-      className="min-h-screen flex items-center justify-center px-4 py-10 relative overflow-hidden"
+      className="min-h-screen flex items-center justify-center px-4 py-10 relative overflow-x-hidden"
       style={{
         background: "linear-gradient(135deg, #020d08 0%, #040f0b 40%, #051a10 70%, #020d08 100%)",
         fontFamily: "'Sora', sans-serif",
@@ -98,11 +108,6 @@ function AuthPage() {
       `}</style>
 
       <div className="max-w-5xl w-full grid gap-10 md:grid-cols-[1fr_0.9fr] items-center relative z-10">
-
-        {/* Language selector — top right (for non-logged-in users) */}
-        <div className="absolute top-0 right-0 z-20">
-          <LanguageSelector variant="auth" />
-        </div>
 
         {/* LEFT — Hero section */}
         <section className="space-y-6 pr-0 md:pr-6">
@@ -193,33 +198,38 @@ function AuthPage() {
               border: "1px solid rgba(16,185,129,0.15)",
             }}
           >
-            {/* Mode toggle */}
-            <div
-              className="inline-flex rounded-full p-1 mb-6 w-full"
-              style={{
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.07)",
-              }}
-            >
-              {["signIn", "signUp"].map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => setMode(m)}
-                  className="toggle-btn flex-1 py-2 rounded-full text-xs font-semibold"
-                  style={
-                    mode === m
-                      ? {
-                          background: "linear-gradient(135deg, #059669, #10b981)",
-                          color: "#022c1a",
-                          boxShadow: "0 2px 12px rgba(16,185,129,0.35)",
-                        }
-                      : { color: "#94a3b8" }
-                  }
-                >
-                  {m === "signIn" ? t("auth.signIn") : t("auth.signUp")}
-                </button>
-              ))}
+            {/* Mode toggle + language (inside card so nothing overlaps the frame) */}
+            <div className="flex flex-col gap-3 mb-6 sm:flex-row sm:items-center sm:gap-3">
+              <div
+                className="flex flex-1 min-w-0 rounded-full p-1 w-full"
+                style={{
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.07)",
+                }}
+              >
+                {["signIn", "signUp"].map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setMode(m)}
+                    className="toggle-btn flex-1 py-2 rounded-full text-xs font-semibold"
+                    style={
+                      mode === m
+                        ? {
+                            background: "linear-gradient(135deg, #059669, #10b981)",
+                            color: "#022c1a",
+                            boxShadow: "0 2px 12px rgba(16,185,129,0.35)",
+                          }
+                        : { color: "#94a3b8" }
+                    }
+                  >
+                    {m === "signIn" ? t("auth.signIn") : t("auth.signUp")}
+                  </button>
+                ))}
+              </div>
+              <div className="flex justify-end sm:items-center sm:flex-shrink-0">
+                <LanguageSelector variant="authCard" />
+              </div>
             </div>
 
             {isSignIn ? <SignIn /> : <SignUp />}

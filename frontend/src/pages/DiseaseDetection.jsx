@@ -1,6 +1,8 @@
 import { useState, useRef } from "react";
 import axios from "axios";
 
+const API_BASE = import.meta.env?.VITE_API_BASE_URL || "http://localhost:5001";
+
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
 
@@ -535,6 +537,121 @@ const styles = `
     animation: slideIn 0.3s ease;
   }
 
+  /* Treatment advice */
+  .treatment-card {
+    margin-top: 28px;
+    background: radial-gradient(circle at 0% 0%, rgba(52,211,100,0.16), transparent 55%),
+                var(--surface);
+    border-radius: 22px;
+    border: 1px solid var(--border-bright);
+    padding: 22px 22px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .treatment-card::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    background: radial-gradient(circle at 12% 0%, rgba(52,211,100,0.26), transparent 55%);
+    opacity: 0.35;
+    pointer-events: none;
+  }
+
+  .treatment-content {
+    position: relative;
+    z-index: 1;
+  }
+
+  .treatment-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(15,118,110,0.35);
+    border: 1px solid rgba(34,197,94,0.5);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+    margin-bottom: 10px;
+  }
+
+  .treatment-title {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .treatment-title-main {
+    font-family: 'Syne', sans-serif;
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .treatment-title-main span {
+    color: var(--emerald);
+  }
+
+  .treatment-subtitle {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .treatment-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 14px;
+  }
+
+  .treatment-block {
+    background: rgba(2,10,6,0.7);
+    border-radius: 14px;
+    padding: 12px 13px;
+    border: 1px solid rgba(15,118,110,0.6);
+  }
+
+  .treatment-block h4 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--emerald);
+    margin-bottom: 6px;
+  }
+
+  .treatment-block ul {
+    list-style: disc;
+    padding-left: 16px;
+  }
+
+  .treatment-block li {
+    font-size: 13px;
+    color: var(--text-soft);
+    line-height: 1.5;
+    margin-bottom: 3px;
+  }
+
+  .treatment-notes {
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--text-soft);
+  }
+
+  .treatment-notes span {
+    color: var(--emerald);
+    font-weight: 500;
+  }
+
+  @media (max-width: 680px) {
+    .treatment-grid { grid-template-columns: 1fr; }
+  }
+
   /* Tips */
   .tips {
     display: grid;
@@ -615,7 +732,7 @@ function DiseaseDetection() {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.post("http://localhost:5001/api/disease/predict", formData);
+      const response = await axios.post(`${API_BASE}/api/disease/predict`, formData);
       setResult(response.data);
     } catch {
       setError("Prediction failed. Please try again.");
@@ -625,7 +742,15 @@ function DiseaseDetection() {
   };
 
   const plantDisease = (() => {
-    if (!result?.disease) return null;
+    if (!result) return null;
+    // Prefer structured fields from backend, but fall back to raw string
+    if (result.plant || result.diseaseName) {
+      return {
+        plant: result.plant || "Unknown",
+        disease: result.diseaseName || "Unknown condition",
+      };
+    }
+    if (!result.disease) return null;
     const [plant, disease] = result.disease.split("___");
     return {
       plant: plant?.replaceAll("_", " "),
@@ -633,7 +758,11 @@ function DiseaseDetection() {
     };
   })();
 
-  const confidence = result?.confidence ? Math.round(result.confidence) * 10 : null;
+  const confidence =
+    result?.confidence != null && !Number.isNaN(Number(result.confidence))
+      ? Math.min(100, Math.max(0, Number(result.confidence))*10)
+      : null;
+  const treatment = result?.treatmentAdvice || null;
 
   return (
     <>
@@ -759,11 +888,26 @@ function DiseaseDetection() {
                     <div className="confidence-bar-wrap">
                       <div className="confidence-label">
                         <span>Confidence</span>
-                        <span>{confidence}%</span>
+                        <span>{Math.round(confidence)}%</span>
                       </div>
                       <div className="confidence-track">
                         <div className="confidence-fill" style={{ width: `${confidence}%` }} />
                       </div>
+                    </div>
+                  )}
+                  {Array.isArray(result.top_predictions) && result.top_predictions.length > 1 && (
+                    <div style={{ marginTop: 14, fontSize: 11, color: "var(--text-soft)", lineHeight: 1.5 }}>
+                      <div style={{ fontWeight: 600, color: "var(--text-muted)", marginBottom: 6, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                        Other likely matches
+                      </div>
+                      <ul style={{ listStyle: "disc", paddingLeft: 18, margin: 0 }}>
+                        {result.top_predictions.slice(1).map((row, idx) => (
+                          <li key={idx}>
+                            {(row.disease || "").replace(/___/g, " — ").replace(/_/g, " ")}{" "}
+                            <span style={{ color: "var(--text-muted)" }}>({row.confidence}%)</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   )}
                 </div>
@@ -774,6 +918,85 @@ function DiseaseDetection() {
               )}
             </div>
           </div>
+
+          {/* Treatment advice (separate card) */}
+          {treatment && (
+            <div className="treatment-card">
+              <div className="treatment-content">
+                <div className="treatment-pill">
+                  <span style={{ fontSize: "12px" }}>🌱</span>
+                  Guided treatment plan
+                </div>
+                <div className="treatment-title">
+                  <div className="treatment-title-main">
+                    Best actions for{" "}
+                    <span>
+                      {plantDisease?.plant || "your crop"}
+                    </span>
+                  </div>
+                  <div className="treatment-subtitle">
+                    {treatment.short_summary ||
+                      "Step-by-step field advice based on the detected condition."}
+                  </div>
+                </div>
+
+                <div className="treatment-grid">
+                  <div className="treatment-block">
+                    <h4>Organic treatment</h4>
+                    <ul>
+                      {(Array.isArray(treatment.organic_treatment) && treatment.organic_treatment.length > 0
+                        ? treatment.organic_treatment
+                        : [
+                            "Use neem-based or other organic sprays at evening time.",
+                            "Remove and destroy heavily infected leaves away from the field.",
+                            "Avoid overhead irrigation to reduce leaf wetness.",
+                          ]
+                      ).map((step, idx) => (
+                        <li key={idx}>{step}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="treatment-block">
+                    <h4>Chemical treatment</h4>
+                    <ul>
+                      {(Array.isArray(treatment.chemical_treatment) && treatment.chemical_treatment.length > 0
+                        ? treatment.chemical_treatment
+                        : [
+                            "Consult local agriculture officer before using any fungicide or pesticide.",
+                            "Always follow label dose, waiting period and safety instructions.",
+                            "Rotate chemicals with different modes of action to avoid resistance.",
+                          ]
+                      ).map((step, idx) => (
+                        <li key={idx}>{step}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="treatment-block">
+                    <h4>Preventive measures</h4>
+                    <ul>
+                      {(Array.isArray(treatment.preventive_measures) && treatment.preventive_measures.length > 0
+                        ? treatment.preventive_measures
+                        : [
+                            "Use certified, disease‑free seeds or seedlings.",
+                            "Practice crop rotation and avoid continuous mono‑cropping.",
+                            "Maintain field sanitation and remove crop residues after harvest.",
+                          ]
+                      ).map((step, idx) => (
+                        <li key={idx}>{step}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="treatment-notes">
+                  <span>Note:</span> This guidance is AI‑generated. Always cross‑check with your local
+                  agriculture officer or extension worker for dosage and products available in your area.
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Tips */}
           <div className="tips">
