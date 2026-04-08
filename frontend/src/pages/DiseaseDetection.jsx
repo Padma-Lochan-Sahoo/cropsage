@@ -1,6 +1,8 @@
 import { useState, useRef } from "react";
 import axios from "axios";
 
+const API_BASE = import.meta.env?.VITE_API_BASE_URL || "http://localhost:5001";
+
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
 
@@ -730,7 +732,7 @@ function DiseaseDetection() {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.post("http://localhost:5001/api/disease/predict", formData);
+      const response = await axios.post(`${API_BASE}/api/disease/predict`, formData);
       setResult(response.data);
     } catch {
       setError("Prediction failed. Please try again.");
@@ -756,7 +758,10 @@ function DiseaseDetection() {
     };
   })();
 
-  const confidence = result?.confidence ? Math.round(result.confidence) * 10 : null;
+  const confidence =
+    result?.confidence != null && !Number.isNaN(Number(result.confidence))
+      ? Math.min(100, Math.max(0, Number(result.confidence))*10)
+      : null;
   const treatment = result?.treatmentAdvice || null;
 
   return (
@@ -883,11 +888,26 @@ function DiseaseDetection() {
                     <div className="confidence-bar-wrap">
                       <div className="confidence-label">
                         <span>Confidence</span>
-                        <span>{confidence}%</span>
+                        <span>{Math.round(confidence)}%</span>
                       </div>
                       <div className="confidence-track">
                         <div className="confidence-fill" style={{ width: `${confidence}%` }} />
                       </div>
+                    </div>
+                  )}
+                  {Array.isArray(result.top_predictions) && result.top_predictions.length > 1 && (
+                    <div style={{ marginTop: 14, fontSize: 11, color: "var(--text-soft)", lineHeight: 1.5 }}>
+                      <div style={{ fontWeight: 600, color: "var(--text-muted)", marginBottom: 6, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                        Other likely matches
+                      </div>
+                      <ul style={{ listStyle: "disc", paddingLeft: 18, margin: 0 }}>
+                        {result.top_predictions.slice(1).map((row, idx) => (
+                          <li key={idx}>
+                            {(row.disease || "").replace(/___/g, " — ").replace(/_/g, " ")}{" "}
+                            <span style={{ color: "var(--text-muted)" }}>({row.confidence}%)</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   )}
                 </div>
