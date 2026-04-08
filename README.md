@@ -1,73 +1,155 @@
-# Crop Sage - Agricultural AI Assistant
+# CropSage
 
-Welcome to Crop Sage, an innovative web application designed to revolutionize the agricultural industry by leveraging advanced AI technologies. Our project integrates Falcon-7B-instruct, a fine-tuned language model, to provide intelligent responses to agricultural queries and a CNN model for plant disease detection.
-
-## Table of Contents
-
-- [Introduction](#introduction)
-- [Features](#features)
-- [Demo](#demo)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Technologies](#technologies)
-- [License](#license)
-
-## Introduction
-
-Crop Sage aims to empower farmers and agricultural experts by providing them with an AI-powered assistant capable of answering questions related to crop management and diagnosing plant diseases from images. This project was developed by Team Crop Sage, combining our passion for technology and agriculture to create a valuable tool for the farming community.
+CropSage is an AI-powered agriculture assistant with three core modules:
+- `frontend`: React + Vite user interface
+- `backend`: Node.js/Express API with auth, chat, weather, profile, disease, and fertilizer routes
+- `CNN_for_disease_detection`: Flask + TensorFlow service for plant disease prediction and crop recommendation
 
 ## Features
 
-- **Intelligent Chatbot**: Ask questions related to agriculture and get precise answers powered by Falcon-7B-instruct.
-- **Plant Disease Detection**: Upload images of plants and receive a diagnosis of potential diseases using our CNN model.
-- **User Authentication**: Secure sign-up and login functionality.
-- **Streamlit Integration**: Easily accessible image upload feature for plant disease detection.
+- Agriculture-focused chatbot with conversation history
+- Plant disease prediction from uploaded leaf images
+- AI-generated treatment suggestions for detected diseases
+- Weather advisory and crop suggestions
+- Crop recommendation from soil and weather metrics
+- User authentication (email/password + Google OAuth)
 
-## Demo
+## Project Structure
 
-Check out our live demo:
+```text
+CropSage/
+├── frontend/                     # React (Vite) client
+├── backend/                      # Express API server
+└── CNN_for_disease_detection/    # Flask ML service (TensorFlow + sklearn)
+```
 
-- **Application URL**: [Your Deployed URL Here]
+## Tech Stack
 
-## Installation
+- Frontend: React 18, Vite, Tailwind CSS, React Router
+- Backend: Node.js, Express, MongoDB (Mongoose), JWT, OpenAI API
+- ML service: Flask, TensorFlow, scikit-learn, Pillow
+- External APIs: OpenWeather, Google OAuth
 
-To run this project locally, follow these steps:
+## Prerequisites
 
-1. **Clone the repository**:
-   ```sh
-   git clone https://github.com/Zaimr49/CropSage.git
-   cd CropSage
-Create and activate a virtual environment:
+- Node.js 18+
+- npm 9+
+- Python 3.10+ (recommended for TensorFlow compatibility)
+- MongoDB instance (local or cloud)
+- API keys:
+  - OpenAI API key
+  - OpenWeather API key
+  - Google OAuth client credentials
 
-sh
-Copy code
-python -m venv env
-source env/bin/activate  # On Windows, use `env\Scripts\activate`
-Install the required packages:
+## Environment Variables
 
-sh
-Copy code
-Run the application:
+### `backend/.env`
 
-sh
-Copy code
-streamlit run main.py
+You can copy `backend/.env.sample` and extend it with the fields below:
 
-## Usage
+```env
+PORT=5001
+MONGO_URI=your_mongodb_connection_string
+SESSION_SECRET=your_session_secret
+JWT_SECRET=your_jwt_secret
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+OPENAI_API_KEY=your_openai_api_key
+OPENAI_CHAT_MODEL=gpt-4o-mini
+OPENWEATHER_API_KEY=your_openweather_api_key
+CROP_RECOMMENDATION_API_URL=http://127.0.0.1:5000
+```
 
-Sign Up / Login: Create an account or log in using your credentials.
-Chat with the AI: Use the chat interface to ask questions about agriculture.
-Plant Disease Detection: Navigate to the disease detection page and upload images of plants to receive a diagnosis.
+### `frontend/.env`
 
-## Technologies
+Copy `frontend/.env.sample` and configure:
 
-Languages: Python
-Frameworks: Streamlit, Flask
-AI Models: Falcon-7B-instruct (fine-tuned), CNN for image classification
-Libraries: transformers, peft, bitsandbytes, trl, torch, OpenCV
-Deployment: Streamlit Cloud
+```env
+VITE_API_BASE_URL=http://localhost:5001
+VITE_FLASK_API_URL=http://127.0.0.1:5000
+VITE_GOOGLE_CLIENT_ID=your_google_client_id
+VITE_ENV=development
+```
+
+## Local Setup
+
+### 1) Clone repository
+
+```bash
+git clone https://github.com/Zaimr49/CropSage.git
+cd CropSage
+```
+
+### 2) Start ML service (`CNN_for_disease_detection`)
+
+```bash
+cd CNN_for_disease_detection
+python -m venv .venv
+```
+
+Activate venv:
+- Windows (PowerShell): `.\.venv\Scripts\Activate.ps1`
+- macOS/Linux: `source .venv/bin/activate`
+
+Install dependencies and run:
+
+```bash
+pip install -r requirements.txt
+python app.py
+```
+
+Default Flask URL: `http://127.0.0.1:5000`
+
+### 3) Start backend API (`backend`)
+
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+Default backend URL: `http://localhost:5001`
+
+### 4) Start frontend (`frontend`)
+
+```bash
+cd frontend
+npm install
+npm run dev -- --port 3000
+```
+
+Frontend URL: `http://localhost:3000`
+
+> Note: Backend CORS is currently set to allow `http://localhost:3000`.
+
+## API Overview
+
+Base URL: `http://localhost:5001`
+
+- `POST /api/auth/signup` - Register user
+- `POST /api/auth/login` - Login user
+- `POST /api/auth/google` - Google OAuth auth
+- `POST /api/chat` - Ask agriculture chatbot (auth required)
+- `POST /api/disease/predict` - Predict disease from image
+- `GET /api/weather` - Weather advisory (auth required)
+- `POST /api/fertilizer/recommend` - Crop recommendation (auth required)
+- `GET /api/profile` - Get user profile (auth required)
+
+## ML Service Endpoints
+
+Base URL: `http://127.0.0.1:5000`
+
+- `POST /predict` - Plant disease classification from image
+- `POST /recommend-crop` - Crop recommendation from NPK + climate values
+
+## Troubleshooting
+
+- TensorFlow install issues: ensure compatible Python version and reinstall in fresh venv.
+- CORS errors: run frontend on `http://localhost:3000` or update backend CORS origin.
+- Mongo connection errors: verify `MONGO_URI` and network/IP whitelist for cloud DB.
+- 500 from AI features: check `OPENAI_API_KEY` and model name in backend env.
+- Weather endpoint failures: validate `OPENWEATHER_API_KEY`.
 
 ## License
-This project is licensed under the MIT License - see the LICENSE file for details.
 
-Thank you for checking out Crop Sage! We hope our application makes a positive impact on the agricultural community.
+This project is licensed under the MIT License. See `LICENSE`.
