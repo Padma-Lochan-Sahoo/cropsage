@@ -5,14 +5,19 @@ import numpy as np
 from PIL import Image, ImageOps
 import io
 import pickle
+import os
 
 app = Flask(__name__)
 
-# Load model ONCE
-model = tf.keras.models.load_model(
-    "trained_plant_disease_model.keras"
-)
-crop_recommendation_model = pickle.load(open('crop_pipeline_model.pkl', 'rb'))
+
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+model_path = os.path.join(BASE_DIR, "trained_plant_disease_model.keras")
+pkl_path = os.path.join(BASE_DIR, "crop_pipeline_model.pkl")
+
+model = tf.keras.models.load_model(model_path)
+crop_recommendation_model = pickle.load(open(pkl_path, 'rb'))
 
 class_name = ['Apple___Apple_scab', 'Apple___Black_rot', 'Apple___Cedar_apple_rust', 'Apple___healthy',
                   'Blueberry___healthy', 'Cherry_(including_sour)___Powdery_mildew',
@@ -31,7 +36,10 @@ class_name = ['Apple___Apple_scab', 'Apple___Black_rot', 'Apple___Cedar_apple_ru
 
 def _prepare_image(file_storage):
     """
-    Match training: RGB, 128x128, float32, values in [0, 1] (see Train_plant_disease.ipynb).
+    Match training pipeline exactly:
+    - tf.keras.utils.image_dataset_from_directory returns pixel values in [0, 255]
+    - No Rescaling layer was added inside the model during training
+    - Therefore: do NOT divide by 255 — keep values in [0, 255] range
     """
     raw = file_storage.read()
     if not raw:
@@ -45,11 +53,18 @@ def _prepare_image(file_storage):
     except AttributeError:
         resample = Image.LANCZOS
     img = img.resize((128, 128), resample)
-    arr = keras_image.img_to_array(img)
-    arr = np.expand_dims(arr, axis=0)
-    arr = arr.astype("float32") / 255.0
+    arr = keras_image.img_to_array(img)          # float32, values in [0, 255]
+    arr = np.expand_dims(arr, axis=0)            # shape: (1, 128, 128, 3)
+    # NOTE: Do NOT divide by 255 here.
+    # The model was trained with image_dataset_from_directory which does NOT
+    # rescale pixel values — it feeds [0, 255] directly to the network.
+    # Dividing by 255 sends near-zero values to the model, causing it to
+    # always predict the same dominant class (Cherry/Squash Powdery Mildew).
     return arr
 
+@app.route("/")
+def home():
+    return "AI API Running"
 
 @app.route("/predict", methods=["POST"])
 def predict():
@@ -119,4 +134,4 @@ def recommend_crop():
     })
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000)
