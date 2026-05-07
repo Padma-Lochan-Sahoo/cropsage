@@ -1,155 +1,398 @@
-# CropSage
+# 🌾 CropSage — AI-Powered Smart Farming Platform
 
-CropSage is an AI-powered agriculture assistant with three core modules:
-- `frontend`: React + Vite user interface
-- `backend`: Node.js/Express API with auth, chat, weather, profile, disease, and fertilizer routes
-- `CNN_for_disease_detection`: Flask + TensorFlow service for plant disease prediction and crop recommendation
+[![Frontend](https://img.shields.io/badge/Frontend-Vercel-black?logo=vercel)](https://cropsage-zeta.vercel.app)
+[![Backend](https://img.shields.io/badge/Backend-Render-46E3B7?logo=render)](https://cropsage-backend.onrender.com)
+[![AI Server](https://img.shields.io/badge/AI%20Server-Render-46E3B7?logo=render)](https://cropsage-ai-models.onrender.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## Features
+CropSage is a full-stack AI-powered precision agriculture platform that helps farmers make data-driven decisions. It combines a Convolutional Neural Network (CNN) for plant disease detection with ML-based crop recommendations, real-time weather data, and an AI farming assistant — all in one browser app available in English, Hindi, and Odia.
 
-- Agriculture-focused chatbot with conversation history
-- Plant disease prediction from uploaded leaf images
-- AI-generated treatment suggestions for detected diseases
-- Weather advisory and crop suggestions
-- Crop recommendation from soil and weather metrics
-- User authentication (email/password + Google OAuth)
+---
 
-## Project Structure
+## 📋 Table of Contents
 
-```text
-CropSage/
-├── frontend/                     # React (Vite) client
-├── backend/                      # Express API server
-└── CNN_for_disease_detection/    # Flask ML service (TensorFlow + sklearn)
+- [Project Overview](#-project-overview)
+- [Architecture](#-architecture)
+- [Features](#-features)
+- [Tech Stack](#-tech-stack)
+- [Folder Structure](#-folder-structure)
+- [Local Setup](#-local-setup)
+- [Environment Variables](#-environment-variables)
+- [Deployment Guide](#-deployment-guide)
+- [API Documentation](#-api-documentation)
+- [Screenshots](#-screenshots)
+- [Troubleshooting](#-troubleshooting)
+- [Future Improvements](#-future-improvements)
+- [Contributing](#-contributing)
+- [License](#-license)
+
+---
+
+## 🌱 Project Overview
+
+CropSage addresses a core challenge for smallholder farmers: accessing expert agricultural knowledge in real time. By combining a CNN trained on 38 plant disease classes, a scikit-learn crop recommendation model, real-time weather data, and GPT-4o-mini generated treatment plans, CropSage provides actionable guidance directly in the farmer's browser.
+
+**Live URLs**
+
+| Service | URL |
+|---------|-----|
+| Frontend | https://cropsage-zeta.vercel.app |
+| Backend API | https://cropsage-backend.onrender.com |
+| Flask AI Server | https://cropsage-ai-models.onrender.com |
+
+---
+
+## 🏗 Architecture
+
+```
+┌─────────────────────────────────────┐
+│           Browser (React)           │
+│  Vite · Tailwind · i18n (3 langs)  │
+└──────────────┬──────────────────────┘
+               │ HTTPS
+               ▼
+┌─────────────────────────────────────┐
+│       Express Backend (Node.js)     │
+│  Auth · Disease · Crop · Weather    │
+│  Chat · Fertilizer · Profile        │
+└──────────┬──────────────────────────┘
+           │ Internal HTTP (multipart/form-data & JSON)
+           ▼
+┌─────────────────────────────────────┐
+│        Flask AI Server (Python)     │
+│  CNN Disease Detection              │
+│  Scikit-learn Crop Recommendation  │
+└──────────────────────────────────────┘
+           │
+           ▼ Model files bundled at deploy time
+  trained_plant_disease_model.keras
+  crop_pipeline_model.pkl
 ```
 
-## Tech Stack
+**Request lifecycle — Plant Disease Detection**
 
-- Frontend: React 18, Vite, Tailwind CSS, React Router
-- Backend: Node.js, Express, MongoDB (Mongoose), JWT, OpenAI API
-- ML service: Flask, TensorFlow, scikit-learn, Pillow
-- External APIs: OpenWeather, Google OAuth
-
-## Prerequisites
-
-- Node.js 18+
-- npm 9+
-- Python 3.10+ (recommended for TensorFlow compatibility)
-- MongoDB instance (local or cloud)
-- API keys:
-  - OpenAI API key
-  - OpenWeather API key
-  - Google OAuth client credentials
-
-## Environment Variables
-
-### `backend/.env`
-
-You can copy `backend/.env.sample` and extend it with the fields below:
-
-```env
-PORT=5001
-MONGO_URI=your_mongodb_connection_string
-SESSION_SECRET=your_session_secret
-JWT_SECRET=your_jwt_secret
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-OPENAI_API_KEY=your_openai_api_key
-OPENAI_CHAT_MODEL=gpt-4o-mini
-OPENWEATHER_API_KEY=your_openweather_api_key
-CROP_RECOMMENDATION_API_URL=http://127.0.0.1:5000
+```
+1. User picks a leaf image in the browser
+2. Frontend sends POST /api/disease/predict  (multipart/form-data, field="image")
+3. Express validates the file and forwards the buffer to Flask /predict
+   └── formData.append("image", buffer, { filename, contentType })  ← critical
+4. Flask: EXIF-fix → RGB → resize 128×128 → float32 [0-255] array
+5. CNN model runs inference → top-3 class probabilities
+6. Express enriches the result via OpenAI GPT-4o-mini (treatment advice)
+7. JSON response sent back to the browser
 ```
 
-### `frontend/.env`
+---
 
-Copy `frontend/.env.sample` and configure:
+## ✨ Features
 
-```env
-VITE_API_BASE_URL=http://localhost:5001
-VITE_FLASK_API_URL=http://127.0.0.1:5000
-VITE_GOOGLE_CLIENT_ID=your_google_client_id
-VITE_ENV=development
+- **Plant Disease Detection** — Upload a leaf photo; CNN identifies the disease from 38 classes with confidence score and top-3 alternatives
+- **AI Treatment Plans** — GPT-4o-mini generates organic treatment, chemical treatment, and preventive measures per detected disease
+- **Crop Recommendation** — Enter soil NPK + climate data; ML model recommends the optimal crop
+- **Fertilizer Recommendation** — Personalised fertilizer guidance with AI cultivation notes
+- **Weather Advisory** — Real-time 5-day forecast with crop-specific weather risk alerts
+- **AI Farming Assistant** — Conversational AI chat for general agricultural queries
+- **Multi-language UI** — English, Hindi (हिंदी), Odia (ଓଡ଼ିଆ)
+- **Google OAuth + JWT** — Secure authentication with session persistence
+
+---
+
+## 🛠 Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 18, Vite, Tailwind CSS, Axios, i18next |
+| Backend | Node.js, Express 4, Mongoose, Multer, JWT, Passport.js |
+| AI Server | Python 3.11, Flask 3, TensorFlow 2.17, scikit-learn 1.4, Pillow, Gunicorn |
+| Database | MongoDB Atlas |
+| AI/LLM | OpenAI GPT-4o-mini |
+| Weather | OpenWeatherMap API |
+| Deployment | Vercel (frontend), Render (backend + AI server) |
+
+---
+
+## 📂 Folder Structure
+
+```
+cropsage/
+├── frontend/                           # React + Vite app
+│   ├── src/
+│   │   ├── pages/
+│   │   │   ├── DiseaseDetection.jsx   # Plant disease UI
+│   │   │   ├── FertilizerRecommendation.jsx
+│   │   │   ├── WeatherAdvisory.jsx
+│   │   │   ├── ChatPage.jsx
+│   │   │   ├── HomePage.jsx
+│   │   │   └── ProfilePage.jsx
+│   │   ├── components/                # Navbar, Sidebar, etc.
+│   │   ├── context/AuthContext.jsx    # JWT auth state
+│   │   ├── locales/                   # en / hi / or translations
+│   │   └── App.jsx
+│   ├── .env.sample
+│   └── vite.config.js
+│
+├── backend/                            # Express API
+│   ├── src/
+│   │   ├── controllers/
+│   │   │   ├── diseaseController.js   # Image proxy → Flask + OpenAI
+│   │   │   ├── fertilizerController.js
+│   │   │   ├── chatController.js
+│   │   │   ├── weatherController.js
+│   │   │   └── authController.js
+│   │   ├── routes/
+│   │   ├── models/                    # Mongoose schemas
+│   │   ├── middleware/auth.js         # JWT guard
+│   │   └── config/db.js
+│   ├── .env.sample
+│   └── app.js
+│
+└── CNN_for_disease_detection/          # Flask AI server
+    ├── app.py                          # Flask routes + preprocessing
+    ├── gunicorn.conf.py                # Production Gunicorn config
+    ├── requirements.txt
+    ├── runtime.txt                     # python-3.11.9
+    ├── trained_plant_disease_model.keras
+    └── crop_pipeline_model.pkl
 ```
 
-## Local Setup
+---
 
-### 1) Clone repository
+## 🚀 Local Setup
 
-```bash
-git clone https://github.com/Zaimr49/CropSage.git
-cd CropSage
-```
+### Prerequisites
 
-### 2) Start ML service (`CNN_for_disease_detection`)
+- Node.js ≥ 20
+- Python 3.11
+- MongoDB Atlas account (or local MongoDB)
+- OpenAI API key
+- OpenWeatherMap API key
+- Google OAuth credentials
+
+### 1. Flask AI Server
 
 ```bash
 cd CNN_for_disease_detection
 python -m venv .venv
-```
-
-Activate venv:
-- Windows (PowerShell): `.\.venv\Scripts\Activate.ps1`
-- macOS/Linux: `source .venv/bin/activate`
-
-Install dependencies and run:
-
-```bash
+source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-python app.py
+python app.py                  # http://localhost:5000
 ```
 
-Default Flask URL: `http://127.0.0.1:5000`
-
-### 3) Start backend API (`backend`)
+### 2. Express Backend
 
 ```bash
 cd backend
+cp .env.sample .env
+# Fill in all values — especially FLASK_SERVER_URL=http://127.0.0.1:5000
 npm install
-npm run dev
+npm run dev                    # http://localhost:5001
 ```
 
-Default backend URL: `http://localhost:5001`
-
-### 4) Start frontend (`frontend`)
+### 3. React Frontend
 
 ```bash
 cd frontend
+cp .env.sample .env.local
+# Set VITE_API_BASE_URL=http://localhost:5001
 npm install
-npm run dev -- --port 3000
+npm run dev                    # http://localhost:3000
 ```
 
-Frontend URL: `http://localhost:3000`
+---
 
-> Note: Backend CORS is currently set to allow `http://localhost:3000`.
+## 🔐 Environment Variables
 
-## API Overview
+### Backend (`backend/.env`)
 
-Base URL: `http://localhost:5001`
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `PORT` | Express server port (default 5001) | No |
+| `MONGO_URI` | MongoDB Atlas connection string | ✅ |
+| `JWT_SECRET` | Secret for signing JWT tokens | ✅ |
+| `SESSION_SECRET` | Express session secret | ✅ |
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID | ✅ |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret | ✅ |
+| `OPENAI_API_KEY` | OpenAI API key | ✅ |
+| `OPENAI_CHAT_MODEL` | Model name (default `gpt-4o-mini`) | No |
+| `FLASK_SERVER_URL` | **URL of the Flask AI server** | ✅ |
+| `OPENWEATHER_API_KEY` | OpenWeatherMap API key | ✅ |
 
-- `POST /api/auth/signup` - Register user
-- `POST /api/auth/login` - Login user
-- `POST /api/auth/google` - Google OAuth auth
-- `POST /api/chat` - Ask agriculture chatbot (auth required)
-- `POST /api/disease/predict` - Predict disease from image
-- `GET /api/weather` - Weather advisory (auth required)
-- `POST /api/fertilizer/recommend` - Crop recommendation (auth required)
-- `GET /api/profile` - Get user profile (auth required)
+> ⚠️ **`FLASK_SERVER_URL` is the #1 cause of disease prediction failures in production.** In Render, set it to `https://cropsage-ai-models.onrender.com`. Locally it defaults to `http://127.0.0.1:5000`.
 
-## ML Service Endpoints
+### Frontend (`frontend/.env.local`)
 
-Base URL: `http://127.0.0.1:5000`
+| Variable | Description |
+|----------|-------------|
+| `VITE_API_BASE_URL` | Backend URL (e.g. `https://cropsage-backend.onrender.com`) |
+| `VITE_FLASK_API_URL` | Flask AI URL |
+| `VITE_GOOGLE_CLIENT_ID` | Google OAuth client ID |
 
-- `POST /predict` - Plant disease classification from image
-- `POST /recommend-crop` - Crop recommendation from NPK + climate values
+---
 
-## Troubleshooting
+## ☁️ Deployment Guide
 
-- TensorFlow install issues: ensure compatible Python version and reinstall in fresh venv.
-- CORS errors: run frontend on `http://localhost:3000` or update backend CORS origin.
-- Mongo connection errors: verify `MONGO_URI` and network/IP whitelist for cloud DB.
-- 500 from AI features: check `OPENAI_API_KEY` and model name in backend env.
-- Weather endpoint failures: validate `OPENWEATHER_API_KEY`.
+### Flask AI Server on Render
 
-## License
+1. Create a new **Web Service** in Render, pointed at your repo
+2. **Root Directory**: `CNN_for_disease_detection`
+3. **Runtime**: Python
+4. **Build Command**: `pip install -r requirements.txt`
+5. **Start Command**: `gunicorn app:app -c gunicorn.conf.py`
+6. **Instance Type**: Standard or higher (the CNN model requires ≥ 512 MB RAM; Starter will OOM and show a 503)
+7. No environment variables are needed for the Flask server itself
 
-This project is licensed under the MIT License. See `LICENSE`.
+> **Cold-start note**: Render free/starter instances spin down after 15 min of inactivity. The first request after a cold start may take 60-120 s while TensorFlow loads the model. The Gunicorn timeout in `gunicorn.conf.py` is set to 180 s to handle this.
+
+### Express Backend on Render
+
+1. Create a new **Web Service**, root directory `backend`
+2. **Build Command**: `npm install`
+3. **Start Command**: `npm start`
+4. Add all environment variables from the table above
+5. **Critical**: set `FLASK_SERVER_URL` = `https://cropsage-ai-models.onrender.com`
+
+### React Frontend on Vercel
+
+1. Import the repo into Vercel, set **Root Directory** to `frontend`
+2. **Framework Preset**: Vite
+3. Add environment variables:
+   - `VITE_API_BASE_URL` = your Render backend URL
+   - `VITE_GOOGLE_CLIENT_ID` = your Google client ID
+4. Deploy
+
+---
+
+## 📖 API Documentation
+
+### Disease Detection
+
+**`POST /api/disease/predict`**
+
+| | |
+|---|---|
+| Content-Type | `multipart/form-data` |
+| Field | `image` (jpg / png / webp, max 10 MB) |
+
+Response `200`:
+```json
+{
+  "disease": "Tomato___Early_blight",
+  "confidence": 94.23,
+  "top_predictions": [
+    { "disease": "Tomato___Early_blight", "confidence": 94.23 },
+    { "disease": "Tomato___Late_blight",  "confidence": 3.11 },
+    { "disease": "Tomato___Target_Spot",  "confidence": 1.44 }
+  ],
+  "plant": "Tomato",
+  "diseaseName": "Early blight",
+  "treatmentAdvice": {
+    "short_summary": "...",
+    "causes": "...",
+    "organic_treatment": ["..."],
+    "chemical_treatment": ["..."],
+    "preventive_measures": ["..."],
+    "notes": "..."
+  }
+}
+```
+
+---
+
+### Crop Recommendation
+
+**`POST /api/fertilizer/recommend`**
+
+Body (JSON):
+```json
+{
+  "Nitrogen": 90, "Phosphorus": 42, "Potassium": 43,
+  "Temperature": 20.8, "Humidity": 82.0,
+  "pH": 6.5, "Rainfall": 202.9
+}
+```
+
+Response `200`:
+```json
+{ "result": "rice is the best crop to be cultivated", "crop": "rice" }
+```
+
+---
+
+### Flask Health Check
+
+**`GET /health`** (Flask server)
+```json
+{
+  "status": "ok",
+  "disease_model_loaded": true,
+  "crop_model_loaded": true
+}
+```
+
+---
+
+## 📸 Screenshots
+
+> Add screenshots after deployment to `docs/screenshots/`
+
+| Feature | File |
+|---------|------|
+| Home Page | `docs/screenshots/home.png` |
+| Disease Detection | `docs/screenshots/disease.png` |
+| Crop Recommendation | `docs/screenshots/crop.png` |
+| Weather Advisory | `docs/screenshots/weather.png` |
+| AI Chat | `docs/screenshots/chat.png` |
+
+---
+
+## 🔧 Troubleshooting
+
+### Disease prediction fails with 500 after deployment
+
+**Root cause**: `FLASK_SERVER_URL` is not set on the Render backend service, so Express tries to reach `localhost:5000` which does not exist in the cloud.
+
+**Fix**: Render → backend service → Environment → add `FLASK_SERVER_URL=https://cropsage-ai-models.onrender.com` → redeploy.
+
+---
+
+### Other common issues
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| Flask 400 "No image uploaded" | `contentType` missing in `formData.append` | Fixed in `diseaseController.js` — pass `{ filename, contentType }` options |
+| Flask 503 on first request | Model failed to load — OOM or missing `.keras` file | Upgrade Render instance to Standard; check that model file is committed |
+| Request timeout (30 s) | Gunicorn default timeout too short | Fixed: `timeout = 180` in `gunicorn.conf.py` |
+| `numpy` import error on Flask | `numpy==1.24.3` incompatible with TF 2.17 | Fixed: `requirements.txt` uses `numpy>=1.26.0` |
+| Disease always predicts same class | Pixel values divided by 255 before inference | Do NOT normalise — model was trained on [0-255] values |
+| CORS error in browser | Frontend URL not in Express CORS whitelist | Add your Vercel URL to the `origin` array in `backend/app.js` |
+| Google OAuth redirect mismatch | Production URL not in Google Console | Add Vercel URL to Authorised Redirect URIs |
+| MongoDB timeout | Atlas Network Access not open | Add `0.0.0.0/0` to Atlas IP allowlist (or Render outbound IPs) |
+
+---
+
+## 🔮 Future Improvements
+
+- Progressive Web App (PWA) with offline leaf-scan cache
+- On-device TensorFlow Lite model for instant predictions without a server round-trip
+- Farmer marketplace — connect buyers/sellers based on crop recommendation output
+- Satellite/drone image integration via Google Earth Engine
+- SMS weather alerts via Twilio
+- Redis caching for crop recommendation results
+- Rate limiting and API key rotation for production hardening
+- CI/CD with GitHub Actions + automated Render/Vercel deploys
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/my-feature`
+3. Commit your changes using Conventional Commits: `git commit -m "feat: add my feature"`
+4. Push to the branch: `git push origin feature/my-feature`
+5. Open a Pull Request describing what you changed and why
+
+---
+
+## 📜 License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
