@@ -6,6 +6,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useTranslation } from "react-i18next";
 
+const API_BASE = import.meta.env?.VITE_API_BASE_URL || "http://localhost:5001";
+
 function SignIn() {
   const [state, setState] = useState({ email: "", password: "" });
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -25,7 +27,7 @@ function SignIn() {
     setLoading(true);
     try {
       const response = await axios.post(
-        "http://localhost:5001/api/auth/login",
+        `${API_BASE}/api/auth/login`,
         { email, password }
       );
       login(response.data.token);
@@ -41,7 +43,7 @@ function SignIn() {
 
   const handleGoogleLoginSuccess = async (response) => {
     try {
-      const res = await axios.post("http://localhost:5001/api/auth/google", {
+      const res = await axios.post(`${API_BASE}/api/auth/google`, {
         token: response.credential,
       });
       login(res.data.token);
@@ -57,34 +59,15 @@ function SignIn() {
     alert(t("auth.googleLoginFailed"));
   };
 
-  const inputStyle = {
-    width: "100%",
-    background: "rgba(255,255,255,0.04)",
-    border: "1px solid rgba(255,255,255,0.09)",
-    borderRadius: "12px",
-    padding: "10px 14px",
-    fontSize: "13px",
-    color: "#f1f5f9",
-    outline: "none",
-    transition: "border-color 0.2s, box-shadow 0.2s",
-    fontFamily: "inherit",
-  };
-
   return (
-    <div className="space-y-4">
+    <div className="space-y-5 animate-in">
       <div>
-        <h2
-          className="text-lg font-semibold text-slate-50"
-          style={{ fontFamily: "'Sora', sans-serif" }}
-        >
+        <h2 className="font-display text-xl font-semibold text-slate-50">
           {t("auth.welcomeBack")}
         </h2>
-        <p className="text-xs text-slate-500 mt-0.5">
-          {t("auth.signInToContinue")}
-        </p>
+        <p className="text-xs text-slate-500 mt-1">{t("auth.signInToContinue")}</p>
       </div>
 
-      {/* Google */}
       <div className="flex justify-center">
         <GoogleLogin
           onSuccess={handleGoogleLoginSuccess}
@@ -92,45 +75,29 @@ function SignIn() {
         />
       </div>
 
-      {/* Divider */}
       <div className="flex items-center gap-3">
-        <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.07)" }} />
+        <div className="flex-1 h-px bg-slate-800" />
         <span className="text-[11px] text-slate-600 font-medium">{t("common.or")}</span>
-        <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.07)" }} />
+        <div className="flex-1 h-px bg-slate-800" />
       </div>
 
-      {/* Form */}
-      <form onSubmit={handleOnSubmit} className="space-y-3">
-        <div className="space-y-1">
-          <label className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">{t("auth.email")}</label>
+      <form onSubmit={handleOnSubmit} className="space-y-4">
+        <div className="space-y-1.5">
+          <label className="section-label">{t("auth.email")}</label>
           <input
             type="email"
             name="email"
             value={state.email}
             onChange={handleChange}
             placeholder="you@example.com"
-            style={inputStyle}
-            onFocus={(e) => {
-              e.target.style.borderColor = "rgba(16,185,129,0.5)";
-              e.target.style.boxShadow = "0 0 0 3px rgba(16,185,129,0.1)";
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = "rgba(255,255,255,0.09)";
-              e.target.style.boxShadow = "none";
-            }}
+            className="input-field"
           />
         </div>
 
-        <div className="space-y-1">
+        <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <label className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">{t("auth.password")}</label>
-            <a
-              href="#"
-              className="text-[11px] transition-colors"
-              style={{ color: "#10b981" }}
-              onMouseEnter={(e) => e.target.style.color = "#6ee7b7"}
-              onMouseLeave={(e) => e.target.style.color = "#10b981"}
-            >
+            <label className="section-label">{t("auth.password")}</label>
+            <a href="#" className="text-[11px] text-emerald-600 hover:text-emerald-400 transition-colors">
               {t("auth.forgotPassword")}
             </a>
           </div>
@@ -141,15 +108,7 @@ function SignIn() {
               value={state.password}
               onChange={handleChange}
               placeholder="••••••••"
-              style={{ ...inputStyle, paddingRight: "40px" }}
-              onFocus={(e) => {
-                e.target.style.borderColor = "rgba(16,185,129,0.5)";
-                e.target.style.boxShadow = "0 0 0 3px rgba(16,185,129,0.1)";
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = "rgba(255,255,255,0.09)";
-                e.target.style.boxShadow = "none";
-              }}
+              className="input-field pr-10"
             />
             <button
               type="button"
@@ -164,24 +123,14 @@ function SignIn() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-xl py-2.5 text-sm font-semibold transition-all duration-200"
-          style={{
-            background: loading
-              ? "rgba(16,185,129,0.4)"
-              : "linear-gradient(135deg, #059669, #10b981)",
-            color: "#022c1a",
-            boxShadow: loading ? "none" : "0 4px 20px rgba(16,185,129,0.3)",
-            cursor: loading ? "not-allowed" : "pointer",
-            fontFamily: "'Sora', sans-serif",
-          }}
-          onMouseEnter={(e) => {
-            if (!loading) e.target.style.boxShadow = "0 4px 28px rgba(16,185,129,0.5)";
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.boxShadow = loading ? "none" : "0 4px 20px rgba(16,185,129,0.3)";
-          }}
+          className="btn-primary w-full py-3 font-display active:scale-95"
         >
-          {loading ? t("auth.signingIn") : t("auth.signInButton")}
+          {loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <div className="w-4 h-4 rounded-full border-2 border-green-900/40 border-t-green-900 animate-spin" />
+              {t("auth.signingIn")}
+            </span>
+          ) : t("auth.signInButton")}
         </button>
       </form>
     </div>

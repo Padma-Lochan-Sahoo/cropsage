@@ -3,22 +3,15 @@ import axios from "axios";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useTranslation } from "react-i18next";
 
-const API_BASE = import.meta.env?.VITE_API_BASE_URL || "http://localhost:5001";
 
-const inputStyle =
-  "w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition";
+const API_BASE = import.meta.env?.VITE_API_BASE_URL || "http://localhost:5001";
 
 function FertilizerRecommendation() {
   const { token } = useAuth();
   const { t } = useTranslation();
   const [form, setForm] = useState({
-    nitrogen: "",
-    phosphorus: "",
-    potassium: "",
-    temperature: "",
-    humidity: "",
-    ph: "",
-    rainfall: "",
+    nitrogen: "", phosphorus: "", potassium: "",
+    temperature: "", humidity: "", ph: "", rainfall: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -31,16 +24,17 @@ function FertilizerRecommendation() {
     const remaining = items.length - slice.length;
     return (
       <>
-        <ul className="list-disc pl-5 space-y-1 text-slate-300 text-sm leading-relaxed">
+        <ul className="space-y-1.5">
           {slice.map((item, idx) => (
-            <li key={idx}>{item}</li>
+            <li key={idx} className="flex gap-2 text-xs text-slate-400 leading-relaxed">
+              <span className="text-emerald-500 mt-0.5 shrink-0">▸</span>
+              <span>{item}</span>
+            </li>
           ))}
         </ul>
-        {remaining > 0 ? (
-          <p className="text-[11px] text-slate-500 mt-1">
-            Showing first {maxItems} items (+{remaining} more in full guide)
-          </p>
-        ) : null}
+        {remaining > 0 && (
+          <p className="text-[11px] text-slate-600 mt-1">+{remaining} more in full guide</p>
+        )}
       </>
     );
   };
@@ -54,15 +48,7 @@ function FertilizerRecommendation() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const { nitrogen, phosphorus, potassium, temperature, humidity, ph, rainfall } = form;
-    if (
-      nitrogen === "" ||
-      phosphorus === "" ||
-      potassium === "" ||
-      temperature === "" ||
-      humidity === "" ||
-      ph === "" ||
-      rainfall === ""
-    ) {
+    if (!nitrogen || !phosphorus || !potassium || !temperature || !humidity || !ph || !rainfall) {
       setError(t("crop.fillAllFields"));
       return;
     }
@@ -85,251 +71,153 @@ function FertilizerRecommendation() {
       );
       setResult(res.data);
     } catch (err) {
-      setError(err.response?.data?.msg || t("crop.failedRecommendation"));
+      setError(err.response?.data?.msg || t("crop.error"));
     } finally {
       setLoading(false);
     }
   };
 
+  const fields1 = [
+    { name: "nitrogen", label: `${t("crop.nitrogen")} (0–140)`, placeholder: "e.g. 90", min: 0, max: 140, step: 1 },
+    { name: "phosphorus", label: `${t("crop.phosphorus")} (0–145)`, placeholder: "e.g. 42", min: 0, max: 145, step: 1 },
+    { name: "potassium", label: `${t("crop.potassium")} (0–205)`, placeholder: "e.g. 43", min: 0, max: 205, step: 1 },
+  ];
+
+  const fields2 = [
+    { name: "temperature", label: `${t("crop.temperature")} (°C)`, placeholder: "e.g. 20.88", step: 0.1, min: 0 },
+    { name: "humidity", label: `${t("crop.humidity")} (%)`, placeholder: "e.g. 82", min: 0, max: 100, step: 0.1 },
+    { name: "ph", label: `${t("crop.ph")} (0–14)`, placeholder: "e.g. 6.5", min: 0, max: 14, step: 0.01 },
+    { name: "rainfall", label: `${t("crop.rainfall")} (mm)`, placeholder: "e.g. 202.9", min: 0, step: 0.1 },
+  ];
+
+  const guideCards = guide ? [
+    { title: "Land prep", data: guide.land_preparation },
+    { title: "Sowing plan", data: guide.sowing_plan },
+    { title: "Fertilizer & nutrients", data: guide.nutrient_plan },
+    { title: "Irrigation", data: guide.irrigation_plan },
+    { title: "Weed & pest basics", data: guide.weed_and_pest_management },
+    { title: "Disease prevention", data: guide.disease_management },
+    { title: "Harvest & post-harvest", data: guide.harvesting_and_post_harvest },
+    { title: "Avoid common mistakes", data: guide.mistakes_to_avoid },
+  ] : [];
+
   return (
-    <div className="max-w-4xl mx-auto py-6 px-4 space-y-6">
+    <div
+      
+      
+      
+      className="max-w-3xl mx-auto py-6 px-4 space-y-6"
+    >
       <div>
-        <h1
-          className="text-2xl font-bold text-slate-50"
-          style={{ fontFamily: "'DM Sans', sans-serif" }}
-        >
-          {t("crop.title")}
-        </h1>
-        <p className="text-slate-500 text-sm mt-1">{t("crop.subtitle")}</p>
+        <h1 className="font-display text-2xl font-bold text-slate-50">{t("crop.title")}</h1>
+        <p className="text-sm text-slate-500 mt-1">{t("crop.subtitle")}</p>
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="rounded-2xl bg-slate-900/50 border border-slate-800 p-6 space-y-5"
-      >
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {/* NPK */}
+        <div className="card p-5 space-y-3">
+          <label className="section-label">{t("crop.npkValues")}</label>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {fields1.map((f) => (
+              <div key={f.name} className="space-y-1">
+                <span className="text-xs text-slate-500">{f.label}</span>
+                <input
+                  type="number"
+                  name={f.name}
+                  value={form[f.name]}
+                  onChange={handleChange}
+                  min={f.min} max={f.max} step={f.step}
+                  placeholder={f.placeholder}
+                  className="input-field"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Weather & Soil */}
+        <div className="card p-5 space-y-3">
+          <label className="section-label">{t("crop.weatherAndSoil")}</label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {fields2.map((f) => (
+              <div key={f.name} className="space-y-1">
+                <span className="text-xs text-slate-500">{f.label}</span>
+                <input
+                  type="number"
+                  name={f.name}
+                  value={form[f.name]}
+                  onChange={handleChange}
+                  min={f.min} max={f.max} step={f.step}
+                  placeholder={f.placeholder}
+                  className="input-field"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
         {error && (
-          <div className="p-3 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-sm">
+          <div className="rounded-xl bg-red-500/10 border border-red-500/25 px-4 py-3 text-sm text-red-400">
             {error}
           </div>
         )}
 
-        <div>
-          <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">
-            {t("crop.nutrientLevels")}
-          </label>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <span className="text-slate-400 text-sm block mb-1">
-                {t("crop.nitrogen")} (0–140)
-              </span>
-              <input
-                type="number"
-                name="nitrogen"
-                value={form.nitrogen}
-                onChange={handleChange}
-                min="0"
-                max="140"
-                step="1"
-                placeholder="e.g. 90"
-                className={inputStyle}
-              />
-            </div>
-            <div>
-              <span className="text-slate-400 text-sm block mb-1">
-                {t("crop.phosphorus")} (0–145)
-              </span>
-              <input
-                type="number"
-                name="phosphorus"
-                value={form.phosphorus}
-                onChange={handleChange}
-                min="0"
-                max="145"
-                step="1"
-                placeholder="e.g. 42"
-                className={inputStyle}
-              />
-            </div>
-            <div>
-              <span className="text-slate-400 text-sm block mb-1">
-                {t("crop.potassium")} (0–205)
-              </span>
-              <input
-                type="number"
-                name="potassium"
-                value={form.potassium}
-                onChange={handleChange}
-                min="0"
-                max="205"
-                step="1"
-                placeholder="e.g. 43"
-                className={inputStyle}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">
-            {t("crop.weatherAndSoil")}
-          </label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <span className="text-slate-400 text-sm block mb-1">
-                {t("crop.temperature")} (°C)
-              </span>
-              <input
-                type="number"
-                name="temperature"
-                value={form.temperature}
-                onChange={handleChange}
-                min="0"
-                step="0.1"
-                placeholder="e.g. 20.88"
-                className={inputStyle}
-              />
-            </div>
-            <div>
-              <span className="text-slate-400 text-sm block mb-1">
-                {t("crop.humidity")} (%)
-              </span>
-              <input
-                type="number"
-                name="humidity"
-                value={form.humidity}
-                onChange={handleChange}
-                min="0"
-                max="100"
-                step="0.1"
-                placeholder="e.g. 82"
-                className={inputStyle}
-              />
-            </div>
-            <div>
-              <span className="text-slate-400 text-sm block mb-1">
-                {t("crop.ph")} (0–14)
-              </span>
-              <input
-                type="number"
-                name="ph"
-                value={form.ph}
-                onChange={handleChange}
-                min="0"
-                max="14"
-                step="0.01"
-                placeholder="e.g. 6.5"
-                className={inputStyle}
-              />
-            </div>
-            <div>
-              <span className="text-slate-400 text-sm block mb-1">
-                {t("crop.rainfall")} (mm)
-              </span>
-              <input
-                type="number"
-                name="rainfall"
-                value={form.rainfall}
-                onChange={handleChange}
-                min="0"
-                step="0.1"
-                placeholder="e.g. 202.9"
-                className={inputStyle}
-              />
-            </div>
-          </div>
-        </div>
-
         <button
           type="submit"
           disabled={loading}
-          className="w-full sm:w-auto px-6 py-2.5 rounded-xl text-sm font-semibold text-slate-900 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 disabled:cursor-not-allowed transition"
+          className="btn-primary"
         >
-          {loading ? t("crop.gettingRecommendation") : t("crop.getRecommendation")}
+          {loading ? (
+            <span className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded-full border-2 border-green-900/40 border-t-green-900 animate-spin" />
+              {t("crop.gettingRecommendation")}
+            </span>
+          ) : t("crop.getRecommendation")}
         </button>
       </form>
 
-      {result && (
-        <div className="rounded-2xl bg-slate-900/50 border border-slate-800 p-6 space-y-5">
-          <h2 className="text-lg font-semibold text-slate-100 mb-3">
-            {t("crop.recommendedCrop")}
-          </h2>
-          <p className="text-emerald-300 text-lg">
-            {result.result}
-          </p>
-          <p className="text-slate-500 text-sm mt-3">
-            {t("crop.recommendationNote")}
-          </p>
-
-          {guide && (
-            <div className="mt-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-5 space-y-4">
-              <h3 className="text-xl font-semibold text-emerald-300">
-                Quick cultivation plan for{" "}
-                {result.crop || "recommended crop"}
-              </h3>
-
-              {guide.overview && (
-                <p className="text-slate-200 text-sm leading-relaxed">
-                  {guide.overview}
-                </p>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h4 className="text-sm font-semibold text-slate-100 mb-1">
-                    Land prep (key steps)
-                  </h4>
-                  {renderList(guide.land_preparation, 3)}
-                </div>
-                <div>
-                  <h4 className="text-sm font-semibold text-slate-100 mb-1">
-                    Sowing plan
-                  </h4>
-                  {renderList(guide.sowing_plan, 3)}
-                </div>
-                <div>
-                  <h4 className="text-sm font-semibold text-slate-100 mb-1">
-                    Fertilizer & nutrients
-                  </h4>
-                  {renderList(guide.nutrient_plan, 3)}
-                </div>
-                <div>
-                  <h4 className="text-sm font-semibold text-slate-100 mb-1">
-                    Irrigation
-                  </h4>
-                  {renderList(guide.irrigation_plan, 3)}
-                </div>
-                <div>
-                  <h4 className="text-sm font-semibold text-slate-100 mb-1">
-                    Weed & pest basics
-                  </h4>
-                  {renderList(guide.weed_and_pest_management, 3)}
-                </div>
-                <div>
-                  <h4 className="text-sm font-semibold text-slate-100 mb-1">
-                    Disease prevention
-                  </h4>
-                  {renderList(guide.disease_management, 3)}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h4 className="text-sm font-semibold text-slate-100 mb-1">
-                    Harvest & post-harvest
-                  </h4>
-                  {renderList(guide.harvesting_and_post_harvest, 3)}
-                </div>
-                <div>
-                  <h4 className="text-sm font-semibold text-slate-100 mb-1">
-                    Avoid common mistakes
-                  </h4>
-                  {renderList(guide.mistakes_to_avoid, 3)}
-                </div>
-              </div>
+      {/* Result */}
+      
+        {result && (
+          <div
+            
+            
+            
+            className="space-y-4"
+          >
+            <div className="card p-6">
+              <h2 className="font-display text-lg font-semibold text-slate-100 mb-2">{t("crop.recommendedCrop")}</h2>
+              <p className="text-2xl font-bold text-emerald-400">{result.result}</p>
+              <p className="text-slate-500 text-xs mt-2">{t("crop.recommendationNote")}</p>
             </div>
-          )}
-        </div>
-      )}
+
+            {guide && (
+              <div className="card p-6 border-emerald-500/25 bg-emerald-500/[0.03] space-y-5">
+                <h3 className="font-display text-lg font-semibold text-emerald-300">
+                  Quick cultivation plan for {result.crop || "recommended crop"}
+                </h3>
+                {guide.overview && (
+                  <p className="text-slate-300 text-sm leading-relaxed">{guide.overview}</p>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {guideCards.filter(c => c.data && c.data.length).map((c, i) => (
+                    <div
+                      key={i}
+                      
+                      
+                      
+                      className="space-y-2"
+                    >
+                      <h4 className="text-xs font-semibold text-slate-300">{c.title}</h4>
+                      {renderList(c.data, 3)}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      
     </div>
   );
 }

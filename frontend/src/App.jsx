@@ -28,83 +28,49 @@ function AuthBootstrapLoader() {
 function AppRoutes() {
   const { token } = useAuth();
   const location = useLocation();
-  const isPublicGuestView =
-    !token && (location.pathname === "/" || location.pathname === "/auth");
+
+  // Guest-only pages: no top navbar / sidebar from App shell
+  const isGuestPage = !token && (location.pathname === "/" || location.pathname === "/auth");
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+
+      {/* ── Logged-in top navbar (all screen sizes) ── */}
       {token && <Navbar />}
+
+      {/* ── Sidebar — desktop only (md+), logged-in only ── */}
       {token && <Sidebar />}
 
+      {/* ── Main content area ── */}
       <main
         className={
-          isPublicGuestView
-            ? "flex-1"
-            : "flex-1 pt-16 pb-16 md:pb-0 md:pl-52"
+          isGuestPage
+            ? "flex-1"                                        // Guest: no padding, LandingNavBar lives inside HomePage
+            : "flex-1 pt-14 pb-20 md:pb-4 md:pl-52"         // Logged in:
+                                                              //   pt-14  → clears fixed top Navbar (56px)
+                                                              //   pb-20  → clears fixed bottom MobileNav on mobile
+                                                              //   md:pb-4 → no MobileNav on md+
+                                                              //   md:pl-52 → clears fixed Sidebar on md+
         }
       >
         <Routes>
-          <Route
-            path="/"
-            element={
-              token ? <Navigate to="/chat" replace /> : <HomePage />
-            }
-          />
+          {/* Public routes */}
+          <Route path="/"    element={token ? <Navigate to="/chat" replace /> : <HomePage />} />
+          <Route path="/auth" element={token ? <Navigate to="/chat" replace /> : <AuthPage />} />
 
-          <Route
-            path="/auth"
-            element={
-              token ? <Navigate to="/chat" replace /> : <AuthPage />
-            }
-          />
+          {/* Shared route — accessible both logged-in and guest (home page with hero) */}
+          <Route path="/home" element={token ? <HomePage /> : <Navigate to="/" replace />} />
 
-          <Route
-            path="/home"
-            element={
-              token ? <HomePage /> : <Navigate to="/" replace />
-            }
-          />
-
-          <Route
-            path="/chat"
-            element={
-              token ? <ChatPage /> : <Navigate to="/auth" replace />
-            }
-          />
-
-          <Route
-            path="/disease-detection"
-            element={
-              token ? <DiseaseDetection /> : <Navigate to="/auth" replace />
-            }
-          />
-
-          <Route
-            path="/profile"
-            element={
-              token ? <ProfilePage /> : <Navigate to="/auth" replace />
-            }
-          />
-
-          <Route
-            path="/weather"
-            element={
-              token ? <WeatherAdvisory /> : <Navigate to="/auth" replace />
-            }
-          />
-
-          <Route
-            path="/fertilizer"
-            element={
-              token ? (
-                <FertilizerRecommendation />
-              ) : (
-                <Navigate to="/auth" replace />
-              )
-            }
-          />
+          {/* Protected routes */}
+          <Route path="/chat"              element={token ? <ChatPage />                : <Navigate to="/auth" replace />} />
+          <Route path="/disease-detection" element={token ? <DiseaseDetection />        : <Navigate to="/auth" replace />} />
+          <Route path="/profile"           element={token ? <ProfilePage />             : <Navigate to="/auth" replace />} />
+          <Route path="/weather"           element={token ? <WeatherAdvisory />         : <Navigate to="/auth" replace />} />
+          <Route path="/fertilizer"        element={token ? <FertilizerRecommendation />: <Navigate to="/auth" replace />} />
         </Routes>
       </main>
+
+      {/* ── Bottom MobileNav — mobile only (hidden md+), logged-in only ── */}
       {token && <MobileNav />}
     </div>
   );

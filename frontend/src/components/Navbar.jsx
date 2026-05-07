@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useTranslation } from "react-i18next";
@@ -7,201 +8,143 @@ function Navbar() {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
 
   const handleSignOut = () => {
     logout();
     navigate("/");
+    setMenuOpen(false);
   };
 
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+    if (menuOpen) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [menuOpen]);
+
+  // Close menu on route change / resize to lg
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) setMenuOpen(false);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+    <nav className="fixed inset-x-0 top-0 z-40 border-b border-slate-800/70 glass animate-fade-in" ref={menuRef}>
+      {/* Top accent line */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent" />
 
-        .navbar-root {
-          font-family: 'DM Sans', sans-serif;
-        }
+      {/* ── Main bar ── */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14">
 
-        .navbar-logo-icon {
-          position: relative;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 34px;
-          height: 34px;
-          border-radius: 9px;
-          background: linear-gradient(135deg, rgba(52,211,153,0.15) 0%, rgba(16,185,129,0.08) 100%);
-          border: 1px solid rgba(52,211,153,0.35);
-          color: #34d399;
-          font-weight: 700;
-          font-size: 12px;
-          letter-spacing: 0.03em;
-          box-shadow: 0 0 16px rgba(52,211,153,0.1), inset 0 1px 0 rgba(255,255,255,0.05);
-          transition: box-shadow 0.2s ease;
-        }
-
-        .navbar-logo-icon::after {
-          content: '';
-          position: absolute;
-          inset: -1px;
-          border-radius: 9px;
-          background: linear-gradient(135deg, rgba(52,211,153,0.2), transparent 60%);
-          pointer-events: none;
-        }
-
-        .navbar-wordmark {
-          font-size: 16px;
-          font-weight: 650;
-          letter-spacing: -0.02em;
-          color: #f1f5f9;
-        }
-
-        .navbar-wordmark span {
-          color: #34d399;
-        }
-
-        .nav-pill {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          padding: 3px 4px;
-          border-radius: 10px;
-          background: rgba(15,23,42,0.6);
-          border: 1px solid rgba(148,163,184,0.08);
-        }
-
-        .nav-pill-link {
-          font-size: 13px;
-          font-weight: 500;
-          color: #64748b;
-          padding: 5px 12px;
-          border-radius: 7px;
-          text-decoration: none;
-          transition: color 0.15s ease, background 0.15s ease;
-          letter-spacing: 0.005em;
-          cursor: pointer;
-        }
-
-        .nav-pill-link:hover {
-          color: #cbd5e1;
-          background: rgba(148,163,184,0.07);
-        }
-
-        .nav-pill-link.active {
-          color: #6ee7b7;
-          background: rgba(52,211,153,0.09);
-        }
-
-        .signout-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          font-family: 'DM Sans', sans-serif;
-          font-size: 13px;
-          font-weight: 500;
-          color: #475569;
-          background: transparent;
-          border: 1px solid rgba(148,163,184,0.1);
-          border-radius: 8px;
-          padding: 6px 10px;
-          cursor: pointer;
-          transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
-          letter-spacing: 0.01em;
-        }
-
-        .signout-btn:hover {
-          color: #f87171;
-          border-color: rgba(248,113,113,0.25);
-          background: rgba(248,113,113,0.05);
-        }
-
-        .signout-btn svg {
-          transition: transform 0.15s ease;
-        }
-
-        .signout-btn:hover svg {
-          transform: translateX(2px);
-        }
-
-        .navbar-divider {
-          width: 1px;
-          height: 16px;
-          background: rgba(148,163,184,0.12);
-          margin: 0 4px;
-        }
-
-        .version-tag {
-          font-size: 10px;
-          font-weight: 600;
-          letter-spacing: 0.08em;
-          color: #34d399;
-          background: rgba(52,211,153,0.08);
-          border: 1px solid rgba(52,211,153,0.18);
-          border-radius: 4px;
-          padding: 1px 5px;
-          text-transform: uppercase;
-        }
-
-        @media (max-width: 640px) {
-          .navbar-wordmark {
-            font-size: 14px;
-          }
-
-          .signout-btn {
-            padding: 6px 8px;
-          }
-        }
-      `}</style>
-
-      <nav className="navbar-root fixed inset-x-0 top-0 z-40 border-b border-slate-800/70"
-        style={{ background: "rgba(2,8,23,0.92)", backdropFilter: "blur(20px)" }}
-      >
-        {/* Subtle top highlight line */}
-        <div style={{
-          position: "absolute", top: 0, left: 0, right: 0, height: "1px",
-          background: "linear-gradient(90deg, transparent 0%, rgba(52,211,153,0.3) 30%, rgba(52,211,153,0.3) 70%, transparent 100%)"
-        }} />
-
-        <div className="max-w-6xl mx-auto px-3 sm:px-4 flex items-center justify-between" style={{ height: 56 }}>
-
-          {/* Left — Logo */}
-          <div className="flex items-center gap-2">
-            <div className="navbar-logo-icon">CS</div>
-            <span className="navbar-wordmark">Crop<span>Sage</span></span>
+        {/* Logo */}
+        <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold text-xs tracking-wide">
+            CS
           </div>
-
-          {/* Right — Actions */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            <LanguageSelector variant="navbar" />
-            {/* Status badge */}
-            <div className="hidden sm:flex items-center gap-1.5" style={{ fontSize: 12, color: "#475569" }}>
-              <span style={{
-                width: 6, height: 6, borderRadius: "50%", background: "#34d399",
-                boxShadow: "0 0 6px #34d399", animation: "pulse-dot 2.5s infinite", display: "inline-block"
-              }} />
-              <span style={{ color: "#334155", fontSize: 12 }}>{t("common.allSystemsNormal")}</span>
-            </div>
-
-            <div className="navbar-divider hidden sm:block" />
-
-            <button type="button" onClick={handleSignOut} className="signout-btn">
-              <span className="hidden sm:inline">{t("common.signOut")}</span>
-              <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M3 4.25A2.25 2.25 0 015.25 2h5.5A2.25 2.25 0 0113 4.25v2a.75.75 0 01-1.5 0v-2a.75.75 0 00-.75-.75h-5.5a.75.75 0 00-.75.75v11.5c0 .414.336.75.75.75h5.5a.75.75 0 00.75-.75v-2a.75.75 0 011.5 0v2A2.25 2.25 0 0110.75 18h-5.5A2.25 2.25 0 013 15.75V4.25z" clipRule="evenodd"/>
-                <path fillRule="evenodd" d="M19 10a.75.75 0 00-.75-.75H8.704l1.048-1.08a.75.75 0 10-1.004-1.115l-2.5 2.4a.75.75 0 000 1.09l2.5 2.4a.75.75 0 101.004-1.115l-1.048-1.08h9.546A.75.75 0 0019 10z" clipRule="evenodd"/>
-              </svg>
-            </button>
-          </div>
+          <span className="font-display text-[15px] font-semibold tracking-tight text-slate-100">
+            Crop<span className="text-emerald-400">Sage</span>
+          </span>
         </div>
 
-        <style>{`
-          @keyframes pulse-dot {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-          }
-        `}</style>
-      </nav>
-    </>
+        {/* ── Desktop right-side (lg+) ── */}
+        <div className="hidden lg:flex items-center gap-3">
+          <LanguageSelector variant="navbar" />
+
+          <div className="flex items-center gap-1.5">
+            <span className="status-dot" />
+            <span className="text-xs text-slate-600 whitespace-nowrap">
+              {t("common.allSystemsNormal")}
+            </span>
+          </div>
+
+          <div className="w-px h-4 bg-slate-800" />
+
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-800 text-slate-500 text-xs font-medium transition-all duration-200 hover:text-rose-400 hover:border-rose-500/30 hover:bg-rose-950/20 active:scale-95"
+          >
+            {t("common.signOut")}
+            <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M3 4.25A2.25 2.25 0 015.25 2h5.5A2.25 2.25 0 0113 4.25v2a.75.75 0 01-1.5 0v-2a.75.75 0 00-.75-.75h-5.5a.75.75 0 00-.75.75v11.5c0 .414.336.75.75.75h5.5a.75.75 0 00.75-.75v-2a.75.75 0 011.5 0v2A2.25 2.25 0 0110.75 18h-5.5A2.25 2.25 0 013 15.75V4.25z" clipRule="evenodd" />
+              <path fillRule="evenodd" d="M19 10a.75.75 0 00-.75-.75H8.704l1.048-1.08a.75.75 0 10-1.004-1.115l-2.5 2.4a.75.75 0 000 1.09l2.5 2.4a.75.75 0 101.004-1.115l-1.048-1.08h9.546A.75.75 0 0019 10z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
+
+        {/* ── Mobile / Tablet right-side (below lg) ── */}
+        <div className="flex lg:hidden items-center gap-2">
+          {/* Language selector always visible */}
+          <LanguageSelector variant="navbar" />
+
+          {/* Hamburger button */}
+          <button
+            type="button"
+            onClick={() => setMenuOpen((prev) => !prev)}
+            aria-label="Toggle menu"
+            aria-expanded={menuOpen}
+            className="flex flex-col items-center justify-center w-9 h-9 rounded-lg border border-slate-800 bg-slate-900/60 text-slate-400 hover:text-emerald-400 hover:border-emerald-500/40 transition-all duration-200 active:scale-95 gap-[5px] px-2"
+          >
+            {/* Animated hamburger → X */}
+            <span
+              className="block h-[1.5px] w-5 bg-current rounded-full transition-all duration-300 origin-center"
+              style={menuOpen ? { transform: "translateY(6.5px) rotate(45deg)" } : {}}
+            />
+            <span
+              className="block h-[1.5px] w-5 bg-current rounded-full transition-all duration-200"
+              style={menuOpen ? { opacity: 0, transform: "scaleX(0)" } : {}}
+            />
+            <span
+              className="block h-[1.5px] w-5 bg-current rounded-full transition-all duration-300 origin-center"
+              style={menuOpen ? { transform: "translateY(-6.5px) rotate(-45deg)" } : {}}
+            />
+          </button>
+        </div>
+      </div>
+
+      {/* ── Mobile Dropdown Menu ── */}
+      <div
+        className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out border-t border-slate-800/60 ${
+          menuOpen ? "max-h-64 opacity-100" : "max-h-0 opacity-0"
+        }`}
+      >
+        <div className="px-4 py-3 space-y-1 bg-slate-950/95" style={{ backdropFilter: "blur(20px)" }}>
+
+          {/* Status row */}
+          <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg">
+            <span className="status-dot" />
+            <span className="text-xs text-slate-500">
+              {t("common.allSystemsNormal")}
+            </span>
+          </div>
+
+          <div className="h-px bg-slate-800/80 mx-1" />
+
+          {/* Sign out */}
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-rose-400 hover:bg-rose-950/20 transition-all duration-200 active:scale-95"
+          >
+            <svg width="15" height="15" viewBox="0 0 20 20" fill="currentColor" className="shrink-0">
+              <path fillRule="evenodd" d="M3 4.25A2.25 2.25 0 015.25 2h5.5A2.25 2.25 0 0113 4.25v2a.75.75 0 01-1.5 0v-2a.75.75 0 00-.75-.75h-5.5a.75.75 0 00-.75.75v11.5c0 .414.336.75.75.75h5.5a.75.75 0 00.75-.75v-2a.75.75 0 011.5 0v2A2.25 2.25 0 0110.75 18h-5.5A2.25 2.25 0 013 15.75V4.25z" clipRule="evenodd" />
+              <path fillRule="evenodd" d="M19 10a.75.75 0 00-.75-.75H8.704l1.048-1.08a.75.75 0 10-1.004-1.115l-2.5 2.4a.75.75 0 000 1.09l2.5 2.4a.75.75 0 101.004-1.115l-1.048-1.08h9.546A.75.75 0 0019 10z" clipRule="evenodd" />
+            </svg>
+            {t("common.signOut")}
+          </button>
+
+        </div>
+      </div>
+    </nav>
   );
 }
 

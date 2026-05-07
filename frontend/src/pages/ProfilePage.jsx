@@ -3,8 +3,7 @@ import axios from "axios";
 import { useAuth } from "../context/AuthContext.jsx";
 import { FaUser, FaPhone, FaMapMarkerAlt, FaInfoCircle, FaSave, FaCrosshairs } from "react-icons/fa";
 
-const API_BASE =
-  import.meta.env?.VITE_API_BASE_URL || "http://localhost:5001";
+const API_BASE = import.meta.env?.VITE_API_BASE_URL || "http://localhost:5001";
 
 function ProfilePage() {
   const { token } = useAuth();
@@ -14,12 +13,7 @@ function ProfilePage() {
   const [locating, setLocating] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [form, setForm] = useState({
-    username: "",
-    email: "",
-    image: "",
-    phone: "",
-    farmLocation: "",
-    bio: "",
+    username: "", email: "", image: "", phone: "", farmLocation: "", bio: "",
   });
 
   useEffect(() => {
@@ -43,7 +37,6 @@ function ProfilePage() {
         setLoading(false);
       }
     };
-
     if (token) fetchProfile();
   }, [token]);
 
@@ -79,13 +72,13 @@ function ProfilePage() {
           setMessage({ type: "success", text: "Location filled successfully" });
           setTimeout(() => setMessage({ type: "", text: "" }), 3000);
         } catch {
-          setForm((prev) => ({ ...prev, farmLocation: `${latitude}, ${longitude}` }));
+          setMessage({ type: "error", text: "Could not reverse geocode location" });
         } finally {
           setLocating(false);
         }
       },
       () => {
-        setMessage({ type: "error", text: "Could not get your location. Please check permissions." });
+        setMessage({ type: "error", text: "Could not get location. Please check permissions." });
         setLocating(false);
       }
     );
@@ -96,196 +89,117 @@ function ProfilePage() {
     setSaving(true);
     setMessage({ type: "", text: "" });
     try {
-      const res = await axios.patch(
-        `${API_BASE}/api/profile`,
-        {
-          username: form.username,
-          image: form.image || undefined,
-          phone: form.phone || undefined,
-          farmLocation: form.farmLocation || undefined,
-          bio: form.bio || undefined,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setProfile(res.data);
-      setMessage({ type: "success", text: "Profile updated successfully" });
+      await axios.put(`${API_BASE}/api/profile`, form, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setMessage({ type: "success", text: "Profile updated successfully!" });
       setTimeout(() => setMessage({ type: "", text: "" }), 3000);
     } catch (err) {
-      setMessage({
-        type: "error",
-        text: err.response?.data?.msg || "Failed to update profile",
-      });
+      setMessage({ type: "error", text: err.response?.data?.msg || "Failed to update profile" });
     } finally {
       setSaving(false);
     }
   };
 
+  const initial = (form.username?.charAt(0) || "F").toUpperCase();
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[40vh]">
-        <div className="animate-pulse text-slate-500">Loading profile…</div>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 rounded-full border-2 border-emerald-500/30 border-t-emerald-400 animate-spin" />
+          <p className="text-sm text-slate-500">Loading profile…</p>
+        </div>
       </div>
     );
   }
 
-  const inputStyle =
-    "w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition";
-
   return (
-    <div className="max-w-2xl mx-auto py-6 px-4">
+    <div className="max-w-2xl mx-auto px-4 py-8 animate-in">
       <div className="mb-8">
-        <h1
-          className="text-2xl font-bold text-slate-50"
-          style={{ fontFamily: "'DM Sans', sans-serif" }}
-        >
-          Profile
-        </h1>
-        <p className="text-slate-500 text-sm mt-1">
-          Manage your farmer profile and farm details
-        </p>
+        <h1 className="font-display text-2xl font-bold text-slate-100">Profile Settings</h1>
+        <p className="text-sm text-slate-500 mt-1">Manage your farm profile and preferences</p>
       </div>
 
       {message.text && (
-        <div
-          className={`mb-6 rounded-xl px-4 py-3 text-sm ${
-            message.type === "success"
-              ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
-              : "bg-red-500/15 text-red-400 border border-red-500/30"
-          }`}
-        >
+        <div className={`mb-6 rounded-xl px-4 py-3 text-sm border animate-in ${
+          message.type === "success"
+            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/25"
+            : "bg-red-500/10 text-red-400 border-red-500/25"
+        }`}>
           {message.text}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Avatar / Image */}
-        <div className="flex items-center gap-6 p-4 rounded-2xl bg-slate-900/50 border border-slate-800">
-          <div className="w-20 h-20 rounded-full overflow-hidden bg-slate-800 flex-shrink-0 flex items-center justify-center">
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Avatar */}
+        <div className="card p-5 flex items-center gap-5">
+          <div className="w-16 h-16 rounded-2xl overflow-hidden bg-gradient-to-br from-emerald-600 to-teal-500 flex-shrink-0 flex items-center justify-center shadow-lg">
             {form.image ? (
-              <img
-                src={form.image}
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
+              <img src={form.image} alt="Profile" className="w-full h-full object-cover" />
             ) : (
-              <span className="text-2xl font-bold text-emerald-500">
-                {form.username?.charAt(0)?.toUpperCase() || "F"}
-              </span>
+              <span className="text-2xl font-bold text-white">{initial}</span>
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
-              Profile image URL
-            </label>
-            <input
-              type="url"
-              name="image"
-              value={form.image}
-              onChange={handleChange}
-              placeholder="https://..."
-              className={inputStyle}
-            />
+            <label className="section-label block mb-1.5">Profile image URL</label>
+            <input type="url" name="image" value={form.image} onChange={handleChange}
+              placeholder="https://..." className="input-field text-xs" />
           </div>
         </div>
 
         {/* Username */}
-        <div>
-          <label className="flex items-center gap-2 text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">
-            <FaUser size={12} />
-            Username
-          </label>
-          <input
-            type="text"
-            name="username"
-            value={form.username}
-            onChange={handleChange}
-            required
-            placeholder="Your name"
-            className={inputStyle}
-          />
+        <div className="card p-5 space-y-1.5">
+          <label className="section-label flex items-center gap-1.5"><FaUser size={10} /> Username</label>
+          <input type="text" name="username" value={form.username} onChange={handleChange}
+            required placeholder="Your name" className="input-field" />
         </div>
 
-        {/* Email (read-only) */}
-        <div>
-          <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">
-            Email
-          </label>
-          <input
-            type="email"
-            value={form.email}
-            readOnly
-            className={`${inputStyle} opacity-70 cursor-not-allowed`}
-          />
-          <p className="text-[11px] text-slate-600 mt-1">
-            Email cannot be changed
-          </p>
+        {/* Email */}
+        <div className="card p-5 space-y-1.5">
+          <label className="section-label block">Email</label>
+          <input type="email" value={form.email} readOnly className="input-field opacity-50 cursor-not-allowed" />
+          <p className="text-[11px] text-slate-600">Email cannot be changed</p>
         </div>
 
         {/* Phone */}
-        <div>
-          <label className="flex items-center gap-2 text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">
-            <FaPhone size={12} />
-            Phone
-          </label>
-          <input
-            type="tel"
-            name="phone"
-            value={form.phone}
-            onChange={handleChange}
-            placeholder="+91 98765 43210"
-            className={inputStyle}
-          />
+        <div className="card p-5 space-y-1.5">
+          <label className="section-label flex items-center gap-1.5"><FaPhone size={10} /> Phone</label>
+          <input type="tel" name="phone" value={form.phone} onChange={handleChange}
+            placeholder="+91 98765 43210" className="input-field" />
         </div>
 
         {/* Farm location */}
-        <div>
-          <label className="flex items-center gap-2 text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">
-            <FaMapMarkerAlt size={12} />
-            Farm location
-          </label>
+        <div className="card p-5 space-y-1.5">
+          <label className="section-label flex items-center gap-1.5"><FaMapMarkerAlt size={10} /> Farm location</label>
           <div className="flex gap-2">
-            <input
-              type="text"
-              name="farmLocation"
-              value={form.farmLocation}
-              onChange={handleChange}
-              placeholder="Village, District, State"
-              className={`${inputStyle} flex-1`}
-            />
+            <input type="text" name="farmLocation" value={form.farmLocation} onChange={handleChange}
+              placeholder="Village, District, State" className="input-field flex-1" />
             <button
               type="button"
               onClick={handleUseCurrentLocation}
               disabled={locating}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-900 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 disabled:cursor-not-allowed transition whitespace-nowrap"
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-950 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap active:scale-95"
             >
-              <FaCrosshairs size={14} />
-              {locating ? "Getting…" : "Use current location"}
+              <FaCrosshairs size={12} />
+              {locating ? "Getting…" : "Use location"}
             </button>
           </div>
         </div>
 
         {/* Bio */}
-        <div>
-          <label className="flex items-center gap-2 text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">
-            <FaInfoCircle size={12} />
-            Bio
-          </label>
-          <textarea
-            name="bio"
-            value={form.bio}
-            onChange={handleChange}
-            rows={4}
-            placeholder="Tell us about your farm and crops..."
-            className={`${inputStyle} resize-none`}
-          />
+        <div className="card p-5 space-y-1.5">
+          <label className="section-label flex items-center gap-1.5"><FaInfoCircle size={10} /> Bio</label>
+          <textarea name="bio" value={form.bio} onChange={handleChange} rows={4}
+            placeholder="Tell us about your farm and crops..." className="input-field resize-none" />
         </div>
 
         <button
           type="submit"
           disabled={saving}
-          className="inline-flex items-center gap-2 rounded-xl px-6 py-2.5 text-sm font-semibold text-slate-900 bg-emerald-500 hover:bg-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 disabled:opacity-60 disabled:cursor-not-allowed transition"
+          className="btn-primary active:scale-95"
         >
-          <FaSave size={14} />
+          <FaSave size={13} />
           {saving ? "Saving…" : "Save changes"}
         </button>
       </form>
