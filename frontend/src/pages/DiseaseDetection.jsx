@@ -36,10 +36,19 @@ function DiseaseDetection() {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.post(`${API_BASE}/api/disease/predict`, formData);
+      const response = await axios.post(`${API_BASE}/api/disease/predict`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+        timeout: 180000,
+      });
       setResult(response.data);
-    } catch {
-      setError("Prediction failed. Please try again.");
+    } catch (err) {
+      const serverMsg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        "Prediction failed. Please try again.";
+      setError(serverMsg);
+      console.error("[DiseaseDetection] predict error:", err.response?.data || err.message);
     } finally {
       setLoading(false);
     }
