@@ -106,485 +106,523 @@ const CROPS_SUPPORTED = [
   "🥭 Mango", "🍊 Citrus", "🫑 Bell Pepper", "🥦 Broccoli",
 ];
 
-function Blobs() {
+function FadeInSection({ children, delay = 0 }) {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) { setVisible(true); obs.disconnect(); }
+    }, { rootMargin: "-80px" });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
   return (
-    <div style={{ position: "fixed", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: 0 }}>
-      <svg style={{ position: "absolute", top: "-10%", right: "-5%", width: "55vw", opacity: 0.07 }} viewBox="0 0 600 600">
-        <defs><radialGradient id="b1" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor="#34d399"/><stop offset="100%" stopColor="transparent"/></radialGradient></defs>
-        <ellipse cx="300" cy="300" rx="300" ry="260" fill="url(#b1)"/>
-      </svg>
-      <svg style={{ position: "absolute", bottom: "10%", left: "-8%", width: "45vw", opacity: 0.05 }} viewBox="0 0 500 500">
-        <defs><radialGradient id="b2" cx="50%" cy="50%" r="50%"><stop offset="0%" stopColor="#6ee7b7"/><stop offset="100%" stopColor="transparent"/></radialGradient></defs>
-        <circle cx="250" cy="250" r="250" fill="url(#b2)"/>
-      </svg>
-      <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0.025 }}>
-        <defs>
-          <pattern id="dots" x="0" y="0" width="32" height="32" patternUnits="userSpaceOnUse">
-            <circle cx="1" cy="1" r="1" fill="#34d399"/>
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#dots)"/>
-      </svg>
-    </div>
-  );
-}
-
-function Marquee({ items }) {
-  const doubled = [...items, ...items];
-  return (
-    <div style={{ overflow: "hidden" }}>
-      <div style={{ display: "flex", animation: "marquee 28s linear infinite", width: "max-content" }}>
-        {doubled.map((item, i) => (
-          <span key={i} style={{ padding: "0 28px", fontSize: 13, color: "#6ee7b7", fontWeight: 500, borderRight: "1px solid rgba(52,211,153,0.2)", whiteSpace: "nowrap" }}>{item}</span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function LandingNavBar() {
-  const { t } = useTranslation();
-  return (
-    <header
+    <div
+      ref={ref}
       style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 30,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "14px 24px",
-        background: "rgba(3,7,18,0.75)",
-        backdropFilter: "blur(16px)",
-        borderBottom: "1px solid rgba(52,211,153,0.12)",
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(28px)",
+        transition: `opacity 0.55s ease ${delay}s, transform 0.55s ease ${delay}s`,
       }}
     >
-      <Link
-        to="/"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          textDecoration: "none",
-          color: "#f1f5f9",
-        }}
+      {children}
+    </div>
+  );
+}
+
+/* ══ LANDING NAVBAR — fully responsive with hamburger ══ */
+function LandingNavBar() {
+  const { t } = useTranslation();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  // Close on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
+    };
+    if (menuOpen) document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [menuOpen]);
+
+  // Close on resize to md+
+  useEffect(() => {
+    const handler = () => { if (window.innerWidth >= 768) setMenuOpen(false); };
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+
+  return (
+    <header
+      ref={menuRef}
+      className="fixed top-0 left-0 right-0 z-30 glass border-b border-emerald-500/10"
+    >
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent" />
+
+      {/* ── Main bar ── */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
+
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-2.5 no-underline shrink-0">
+          <span className="text-xl sm:text-2xl">🌾</span>
+          <span className="font-display text-sm sm:text-base font-bold text-emerald-400 tracking-tight">CropSage</span>
+        </Link>
+
+        {/* Desktop nav (md+) */}
+        <div className="hidden md:flex items-center gap-2 sm:gap-3">
+          <LanguageSelector variant="auth" />
+          <Link
+            to="/auth?mode=signIn"
+            className="btn-ghost text-xs px-4 py-2"
+          >
+            {t("auth.signIn")}
+          </Link>
+          <Link
+            to="/auth?mode=signUp"
+            className="btn-primary text-xs px-4 py-2"
+          >
+            {t("auth.signUp")}
+          </Link>
+        </div>
+
+        {/* Mobile right side (below md) */}
+        <div className="flex md:hidden items-center gap-2">
+          <LanguageSelector variant="auth" />
+
+          {/* Hamburger */}
+          <button
+            type="button"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-label="Toggle menu"
+            aria-expanded={menuOpen}
+            className="flex flex-col items-center justify-center w-9 h-9 rounded-lg border border-slate-700/60 bg-slate-900/60 text-slate-400 hover:text-emerald-400 hover:border-emerald-500/40 transition-all duration-200 gap-[5px] px-2"
+          >
+            <span
+              className="block h-[1.5px] w-5 bg-current rounded-full transition-all duration-300 origin-center"
+              style={menuOpen ? { transform: "translateY(6.5px) rotate(45deg)" } : {}}
+            />
+            <span
+              className="block h-[1.5px] w-5 bg-current rounded-full transition-all duration-200"
+              style={menuOpen ? { opacity: 0, transform: "scaleX(0)" } : {}}
+            />
+            <span
+              className="block h-[1.5px] w-5 bg-current rounded-full transition-all duration-300 origin-center"
+              style={menuOpen ? { transform: "translateY(-6.5px) rotate(-45deg)" } : {}}
+            />
+          </button>
+        </div>
+      </div>
+
+      {/* ── Mobile dropdown (below md) ── */}
+      <div
+        className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out border-t border-slate-800/60 ${
+          menuOpen ? "max-h-48 opacity-100" : "max-h-0 opacity-0"
+        }`}
       >
-        <span style={{ fontSize: 26 }}>🌾</span>
-        <span className="serif" style={{ fontSize: 20, fontWeight: 700, color: "#34d399" }}>
-          CropSage
-        </span>
-      </Link>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", justifyContent: "flex-end" }}>
-        <LanguageSelector variant="auth" />
-        <Link
-          to="/auth?mode=signIn"
-          className="ghost-btn"
-          style={{ padding: "10px 20px", fontSize: 13, textDecoration: "none", display: "inline-flex", alignItems: "center" }}
-        >
-          {t("auth.signIn")}
-        </Link>
-        <Link
-          to="/auth?mode=signUp"
-          className="cta-btn"
-          style={{ padding: "10px 22px", fontSize: 13, textDecoration: "none", display: "inline-flex", alignItems: "center" }}
-        >
-          {t("auth.signUp")}
-        </Link>
+        <div className="px-4 py-3 flex flex-col gap-2 bg-slate-950/95" style={{ backdropFilter: "blur(20px)" }}>
+          <Link
+            to="/auth?mode=signIn"
+            onClick={() => setMenuOpen(false)}
+            className="w-full text-center py-2.5 rounded-xl text-sm font-semibold border border-slate-700 text-slate-300 hover:border-emerald-500/50 hover:text-emerald-300 hover:bg-emerald-950/20 transition-all duration-200"
+          >
+            {t("auth.signIn")}
+          </Link>
+          <Link
+            to="/auth?mode=signUp"
+            onClick={() => setMenuOpen(false)}
+            className="w-full text-center py-2.5 rounded-xl text-sm font-semibold text-slate-950 transition-all duration-200 active:scale-95"
+            style={{ background: "linear-gradient(135deg, #059669, #10b981)", boxShadow: "0 4px 20px rgba(16,185,129,0.25)" }}
+          >
+            {t("auth.signUp")}
+          </Link>
+        </div>
       </div>
     </header>
   );
 }
 
 export default function HomePage() {
-  const crop = useTypewriter(CROPS);
-  const { t } = useTranslation();
   const { token } = useAuth();
+  const { t } = useTranslation();
+  const crop = useTypewriter(CROPS);
   const [tab, setTab] = useState(0);
-  const [statsOn, setStatsOn] = useState(false);
-  const statsRef = useRef();
-  const farmers = useCounter(12000, statsOn);
-  const diseases = useCounter(47, statsOn);
-  const accuracy = useCounter(94, statsOn);
-
-  useEffect(() => {
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) setStatsOn(true); }, { threshold: 0.3 });
-    if (statsRef.current) io.observe(statsRef.current);
-    return () => io.disconnect();
-  }, []);
-
   const f = FEATURES[tab];
-
-  const guestTopPad = !token ? 72 : 0;
+  const statsRef = useRef(null);
+  const [statsInView, setStatsInView] = useState(false);
+  useEffect(() => {
+    const el = statsRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) { setStatsInView(true); obs.disconnect(); }
+    });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  const farmers = useCounter(12400, statsInView);
+  const diseases = useCounter(47, statsInView);
+  const accuracy = useCounter(94, statsInView);
 
   return (
-    <div style={{ background: "#030712", color: "#f1f5f9", minHeight: "100vh", fontFamily: "'DM Sans', sans-serif", overflowX: "hidden", position: "relative" }}>
-      {!token && <LandingNavBar />}
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600;700&display=swap');
-        .serif { font-family: 'Playfair Display', serif; }
-        @keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
-        @keyframes floatY { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
-        @keyframes spinSlow { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-        @keyframes fadeUp { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes pulseGlow { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.6;transform:scale(1.15)} }
-        @keyframes shimmer { 0%{background-position:-300% center} 100%{background-position:300% center} }
-        @keyframes blink { 50%{opacity:0} }
-        @keyframes badgePulse {
-          0%,100%{ box-shadow: 0 0 0 0 rgba(52,211,153,0.5), 0 0 30px rgba(52,211,153,0.15); }
-          50%{ box-shadow: 0 0 0 10px rgba(52,211,153,0), 0 0 50px rgba(52,211,153,0.25); }
-        }
-        .cta-btn {
-          background: linear-gradient(135deg, #34d399, #059669);
-          color: #030712; font-weight: 700; border: none;
-          border-radius: 14px; padding: 14px 32px; font-size: 14px;
-          cursor: pointer; transition: all 0.3s ease; letter-spacing: 0.02em;
-          font-family: 'DM Sans', sans-serif;
-        }
-        .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(52,211,153,0.35); }
-        .ghost-btn {
-          background: transparent; color: #94a3b8; font-weight: 500;
-          border: 1px solid rgba(148,163,184,0.2);
-          border-radius: 14px; padding: 14px 28px; font-size: 14px;
-          cursor: pointer; transition: all 0.3s ease;
-          font-family: 'DM Sans', sans-serif;
-        }
-        .ghost-btn:hover { border-color: rgba(52,211,153,0.4); color: #34d399; }
-        .card { border-radius: 20px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.025); backdrop-filter: blur(12px); transition: all 0.3s; }
-        .card:hover { border-color: rgba(52,211,153,0.2); }
-        .shimmer-green {
-          background: linear-gradient(90deg,#34d399 0%,#6ee7b7 25%,#a7f3d0 50%,#34d399 75%,#059669 100%);
-          background-size: 300% auto;
-          -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-          animation: shimmer 5s linear infinite;
-        }
-        .welcome-badge {
-          display: inline-flex; align-items: center; gap: 14px;
-          background: linear-gradient(135deg, rgba(52,211,153,0.12), rgba(5,150,105,0.08));
-          border: 1.5px solid rgba(52,211,153,0.35);
-          border-radius: 100px;
-          padding: 16px 40px;
-          animation: badgePulse 3s ease-in-out infinite;
-        }
-        .tab-btn {
-          padding: 9px 20px; border-radius: 10px;
-          font-size: 13px; font-weight: 500; cursor: pointer;
-          transition: all 0.25s; border: 1px solid transparent;
-          font-family: 'DM Sans', sans-serif;
-        }
-        .tab-active { background: #34d399; color: #030712; font-weight: 700; }
-        .tab-inactive { background: rgba(255,255,255,0.04); color: #64748b; border-color: rgba(255,255,255,0.08); }
-        .tab-inactive:hover { color: #34d399; border-color: rgba(52,211,153,0.3); }
-        .cursor-blink { display:inline-block; width:3px; height:0.9em; background:#34d399; margin-left:3px; vertical-align:middle; animation:blink 1s step-end infinite; border-radius:1px; }
-        .tip-card { border-radius: 18px; padding: 22px; border: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.02); transition: all 0.3s; }
-        .tip-card:hover { transform: translateY(-4px); background: rgba(255,255,255,0.04); }
-        .section-label { font-size: 11px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: #34d399; }
-        .divider { border: none; border-top: 1px solid rgba(255,255,255,0.05); margin: 0; }
-        .stat-card { border-radius: 20px; border: 1px solid rgba(52,211,153,0.12); background: linear-gradient(135deg, rgba(52,211,153,0.05), rgba(5,150,105,0.03)); padding: 40px 24px; text-align: center; transition: all 0.3s; }
-        .stat-card:hover { border-color: rgba(52,211,153,0.3); transform: translateY(-4px); box-shadow: 0 20px 40px rgba(52,211,153,0.08); }
-        * { box-sizing: border-box; }
-      `}</style>
+    <div className="min-h-screen bg-slate-950 text-slate-100 overflow-x-hidden font-sans">
+      {/* Background blobs */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute -top-32 -right-32 w-[600px] h-[600px] rounded-full opacity-[0.07]"
+          style={{ background: "radial-gradient(circle, #34d399 0%, transparent 70%)", filter: "blur(40px)" }} />
+        <div className="absolute bottom-0 -left-40 w-[500px] h-[500px] rounded-full opacity-[0.05]"
+          style={{ background: "radial-gradient(circle, #6ee7b7 0%, transparent 70%)", filter: "blur(50px)" }} />
+        <div className="absolute inset-0 opacity-[0.025]"
+          style={{ backgroundImage: "radial-gradient(circle, #34d399 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
+      </div>
 
-      <Blobs />
+      {/* Always show landing navbar when not logged in */}
+      {!token && <LandingNavBar />}
 
       {/* ══ HERO ══ */}
-      <section style={{ position: "relative", zIndex: 1, minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: `${guestTopPad + 80}px 24px 60px`, textAlign: "center" }}>
-
-        {/* BIG Welcome Badge */}
-        <div style={{ animation: "fadeUp 0.5s ease both", marginBottom: 36 }}>
-          <div className="welcome-badge">
-            <span style={{ fontSize: 32 }}>🌿</span>
-            <span style={{ fontSize: 20, fontWeight: 700, color: "#34d399", letterSpacing: "0.04em", fontFamily: "'DM Sans', sans-serif" }}>{t("home.welcomeToCropSage")}</span>
-            <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#34d399", animation: "pulseGlow 2s ease-in-out infinite", flexShrink: 0 }} />
-          </div>
+      <section
+        className="relative z-10 min-h-screen flex flex-col items-center justify-center text-center px-4 sm:px-6"
+        style={{ paddingTop: token ? 40 : 120, paddingBottom: 60 }}
+      >
+        <div className="inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2 sm:py-3 rounded-full border border-emerald-500/30 bg-emerald-500/8 mb-6 sm:mb-8">
+          <span className="text-lg sm:text-2xl">🌿</span>
+          <span className="font-display text-sm sm:text-base font-semibold text-emerald-400 tracking-wide">
+            {t("home.welcomeToCropSage")}
+          </span>
+          <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-emerald-400 animate-pulse-slow" style={{ boxShadow: "0 0 8px #34d399" }} />
         </div>
 
-        {/* Headline */}
-        <div style={{ animation: "fadeUp 0.6s 0.1s ease both", opacity: 0, animationFillMode: "forwards" }}>
-          <h1 className="serif" style={{ fontSize: "clamp(44px, 8.5vw, 96px)", lineHeight: 1.03, marginBottom: 16, fontWeight: 900, letterSpacing: "-0.02em" }}>
-            {t("home.smarterFarming")}<br/>
-            <span className="shimmer-green">{t("home.forEveryCrop")}</span>
-          </h1>
-        </div>
+        <h1 className="font-display font-black text-[clamp(36px,8.5vw,96px)] leading-[1.03] tracking-tight mb-4 sm:mb-5">
+          {t("home.smarterFarming")}<br />
+          <span className="gradient-text">{t("home.forEveryCrop")}</span>
+        </h1>
 
-        {/* Typewriter */}
-        <div style={{ animation: "fadeUp 0.6s 0.2s ease both", opacity: 0, animationFillMode: "forwards", marginBottom: 24 }}>
-          <p style={{ fontSize: "clamp(18px, 3vw, 28px)", color: "#475569", fontWeight: 300 }}>
-            {t("home.aiAssistantFor")}{" "}
-            <span style={{ color: "#34d399", fontWeight: 600 }}>{crop}</span>
-            <span className="cursor-blink" />
-          </p>
-        </div>
+        <p className="text-[clamp(16px,3vw,26px)] text-slate-500 font-light mb-4 sm:mb-5">
+          {t("home.aiAssistantFor")}{" "}
+          <span className="text-emerald-400 font-semibold">{crop}</span>
+          <span className="inline-block w-0.5 h-[0.9em] bg-emerald-400 ml-1 align-middle animate-pulse" />
+        </p>
 
-        {/* Description */}
-        <div style={{ animation: "fadeUp 0.6s 0.3s ease both", opacity: 0, animationFillMode: "forwards", marginBottom: 40 }}>
-          <p style={{ fontSize: 16, color: "#3d4f63", maxWidth: 540, lineHeight: 1.85, margin: "0 auto" }}>
-            {t("home.description")}
-          </p>
-        </div>
+        <p className="text-sm sm:text-base text-slate-600 max-w-lg leading-relaxed mb-8 sm:mb-10 px-2">
+          {t("home.description")}
+        </p>
 
-        {/* CTAs */}
-        <div style={{ animation: "fadeUp 0.6s 0.4s ease both", opacity: 0, animationFillMode: "forwards", display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center", marginBottom: 64 }}>
-          <Link to="/auth?mode=signUp" className="cta-btn" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center" }}>
+        <div className="flex gap-3 flex-wrap justify-center mb-12 sm:mb-16">
+          <Link to="/auth?mode=signUp" className="btn-primary text-sm px-6 sm:px-7 py-2.5 sm:py-3 font-display">
             {t("home.getStartedFree")}
           </Link>
-          <button type="button" className="ghost-btn">{t("home.watchDemo")}</button>
+          <button type="button" className="btn-ghost text-sm px-6 sm:px-7 py-2.5 sm:py-3">
+            {t("home.watchDemo")}
+          </button>
         </div>
 
-        {/* Hero dashboard cards */}
-        <div style={{ animation: "fadeUp 0.8s 0.5s ease both", opacity: 0, animationFillMode: "forwards", width: "100%", maxWidth: 860, position: "relative" }}>
-          <div className="card" style={{ padding: "24px", display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>
+        {/* Hero stats cards */}
+        <div className="w-full max-w-3xl relative">
+          <div className="card p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
             {[
-              { label: "Diseases Detected Today", value: "12", sub: "+3 from yesterday", icon: "🔬", color: "#34d399", delay: "0s" },
-              { label: "Field Health Score", value: "87%", sub: "Above average ↑", icon: "🌱", color: "#a3e635", delay: "0.3s" },
-              { label: "Water Saved This Month", value: "2,400L", sub: "22% reduction", icon: "💧", color: "#38bdf8", delay: "0.6s" },
+              { label: "Diseases Detected Today", value: "12", sub: "+3 from yesterday", icon: "🔬", color: "#34d399" },
+              { label: "Field Health Score", value: "87%", sub: "Above average ↑", icon: "🌱", color: "#a3e635" },
+              { label: "Water Saved This Month", value: "2,400L", sub: "22% reduction", icon: "💧", color: "#38bdf8" },
             ].map((c, i) => (
-              <div key={i} style={{ background: "rgba(255,255,255,0.03)", borderRadius: 16, padding: "20px", border: "1px solid rgba(255,255,255,0.06)", animation: `floatY ${3.5 + i * 0.5}s ease-in-out ${c.delay} infinite` }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
-                  <span style={{ fontSize: 10, color: "#475569", fontWeight: 600, letterSpacing: "0.07em", textTransform: "uppercase", lineHeight: 1.4 }}>{c.label}</span>
-                  <span style={{ fontSize: 22 }}>{c.icon}</span>
+              <div key={i} className="bg-slate-900/60 rounded-xl p-4 sm:p-5 border border-slate-800/80">
+                <div className="flex items-start justify-between mb-2 sm:mb-3">
+                  <span className="text-[10px] text-slate-500 font-semibold tracking-widest uppercase leading-snug">{c.label}</span>
+                  <span className="text-lg sm:text-xl">{c.icon}</span>
                 </div>
-                <div style={{ fontSize: 34, fontWeight: 800, color: c.color, marginBottom: 4, fontFamily: "'Playfair Display', serif" }}>{c.value}</div>
-                <div style={{ fontSize: 12, color: "#334155" }}>{c.sub}</div>
+                <div className="font-display text-2xl sm:text-3xl font-bold mb-1" style={{ color: c.color }}>{c.value}</div>
+                <div className="text-xs text-slate-600">{c.sub}</div>
               </div>
             ))}
           </div>
-          {/* Decorative spinning rings */}
-          <div style={{ position: "absolute", top: -28, right: -28, width: 110, height: 110, borderRadius: "50%", border: "1px dashed rgba(52,211,153,0.2)", animation: "spinSlow 22s linear infinite" }} />
-          <div style={{ position: "absolute", top: -14, right: -14, width: 80, height: 80, borderRadius: "50%", border: "1px dashed rgba(52,211,153,0.1)", animation: "spinSlow 16s linear infinite reverse" }} />
+          <div className="absolute -top-7 -right-7 w-28 h-28 rounded-full border border-dashed border-emerald-500/20 animate-spin-slow hidden sm:block" />
+          <div className="absolute -top-4 -right-4 w-16 h-16 rounded-full border border-dashed border-emerald-500/10 hidden sm:block"
+            style={{ animation: "spin 16s linear infinite reverse" }} />
         </div>
       </section>
 
       {/* ══ MARQUEE ══ */}
-      <div style={{ position: "relative", zIndex: 1, borderTop: "1px solid rgba(52,211,153,0.08)", borderBottom: "1px solid rgba(52,211,153,0.08)", padding: "14px 0", background: "rgba(52,211,153,0.025)" }}>
-        <Marquee items={CROPS_SUPPORTED} />
+      <div className="relative z-10 border-y border-emerald-500/8 py-3.5 bg-emerald-500/[0.02] overflow-hidden">
+        <div className="flex" style={{ width: "max-content", animation: "marqueeScroll 30s linear infinite" }}>
+          {[...CROPS_SUPPORTED, ...CROPS_SUPPORTED].map((item, i) => (
+            <span key={i} className="px-5 sm:px-7 text-emerald-500 font-medium text-xs border-r border-emerald-500/20 whitespace-nowrap">{item}</span>
+          ))}
+        </div>
       </div>
 
       {/* ══ STATS ══ */}
-      <section ref={statsRef} style={{ position: "relative", zIndex: 1, padding: "80px 24px" }}>
-        <div style={{ maxWidth: 860, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 24 }}>
+      <section ref={statsRef} className="relative z-10 py-14 sm:py-20 px-4">
+        <div className="max-w-3xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
           {[
             { n: farmers.toLocaleString() + "+", label: "Farmers Helped", icon: "👨‍🌾" },
             { n: diseases + "+", label: "Diseases Identified", icon: "🦠" },
             { n: accuracy + "%", label: "Detection Accuracy", icon: "🎯" },
           ].map((s, i) => (
-            <div key={i} className="stat-card">
-              <div style={{ fontSize: 36, marginBottom: 12 }}>{s.icon}</div>
-              <div className="serif" style={{ fontSize: "clamp(36px,5vw,58px)", color: "#34d399", fontWeight: 700, lineHeight: 1, marginBottom: 8 }}>{s.n}</div>
-              <div style={{ fontSize: 11, color: "#475569", textTransform: "uppercase", letterSpacing: "0.12em" }}>{s.label}</div>
-            </div>
+            <FadeInSection key={i} delay={i * 0.1}>
+              <div className="card-hover text-center p-8 sm:p-10 rounded-2xl">
+                <div className="text-3xl sm:text-4xl mb-3">{s.icon}</div>
+                <div className="font-display text-[clamp(32px,5vw,56px)] font-bold text-emerald-400 leading-none mb-2">{s.n}</div>
+                <div className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">{s.label}</div>
+              </div>
+            </FadeInSection>
           ))}
         </div>
       </section>
 
-      <hr className="divider" />
+      <div className="h-px bg-slate-800/50 mx-auto max-w-6xl" />
 
       {/* ══ FEATURES ══ */}
-      <section style={{ position: "relative", zIndex: 1, padding: "80px 24px", maxWidth: 1100, margin: "0 auto" }}>
-        <div style={{ textAlign: "center", marginBottom: 48 }}>
-          <p className="section-label" style={{ marginBottom: 14 }}>{t("home.features")}</p>
-          <h2 className="serif" style={{ fontSize: "clamp(30px,5vw,52px)", fontWeight: 700 }}>{t("home.onePlatform")}</h2>
-        </div>
-        <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap", marginBottom: 36 }}>
-          {FEATURES.map((ft, i) => (
-            <button key={i} className={`tab-btn ${tab === i ? "tab-active" : "tab-inactive"}`} onClick={() => setTab(i)}>
-              {ft.icon} {ft.label}
-            </button>
-          ))}
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
-          <div className="card" style={{ padding: "36px 40px" }}>
-            <div style={{ fontSize: 48, marginBottom: 20 }}>{f.icon}</div>
-            <h3 style={{ fontSize: 24, fontWeight: 700, marginBottom: 14, lineHeight: 1.3 }}>{f.title}</h3>
-            <p style={{ fontSize: 14, color: "#475569", lineHeight: 1.9, marginBottom: 24 }}>{f.desc}</p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-              {f.tags.map(t => (
-                <span key={t} style={{ fontSize: 12, padding: "5px 14px", borderRadius: 100, background: "rgba(52,211,153,0.08)", color: "#34d399", border: "1px solid rgba(52,211,153,0.2)" }}>{t}</span>
+      <section className="relative z-10 py-14 sm:py-20 px-4 max-w-6xl mx-auto">
+        <FadeInSection>
+          <div className="text-center mb-10 sm:mb-12">
+            <p className="section-label mb-3">{t("home.features")}</p>
+            <h2 className="font-display text-[clamp(26px,5vw,52px)] font-bold">{t("home.onePlatform")}</h2>
+          </div>
+        </FadeInSection>
+
+        <FadeInSection delay={0.1}>
+          <div className="flex gap-2 justify-center flex-wrap mb-6 sm:mb-8">
+            {FEATURES.map((ft, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setTab(i)}
+                className={`px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 ${
+                  tab === i
+                    ? "bg-emerald-500 text-slate-950 font-bold shadow-lg shadow-emerald-500/20"
+                    : "bg-slate-900/60 text-slate-500 border border-slate-800 hover:text-emerald-400 hover:border-emerald-500/30"
+                }`}
+              >
+                {ft.icon} {ft.label}
+              </button>
+            ))}
+          </div>
+        </FadeInSection>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+          <div className="card p-6 sm:p-8 lg:p-10">
+            <div className="text-4xl sm:text-5xl mb-4 sm:mb-5">{f.icon}</div>
+            <h3 className="font-display text-lg sm:text-xl lg:text-2xl font-bold mb-3 sm:mb-4 leading-snug">{f.title}</h3>
+            <p className="text-sm text-slate-500 leading-relaxed mb-5 sm:mb-6">{f.desc}</p>
+            <div className="flex flex-wrap gap-2">
+              {f.tags.map((tag) => (
+                <span key={tag} className="text-xs px-3 py-1 rounded-full bg-emerald-500/8 text-emerald-400 border border-emerald-500/20">{tag}</span>
               ))}
             </div>
           </div>
-          <div className="card" style={{ padding: "28px", background: "rgba(5,150,105,0.03)" }}>
-            <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
-              {["#ff5f57","#ffbd2e","#28ca41"].map(c => <div key={c} style={{ width: 10, height: 10, borderRadius: "50%", background: c }} />)}
+
+          <div className="card p-5 sm:p-6 bg-emerald-500/[0.02]">
+            <div className="flex gap-1.5 mb-4 sm:mb-5">
+              {["#ff5f57", "#ffbd2e", "#28ca41"].map((c) => (
+                <div key={c} className="w-2.5 h-2.5 rounded-full" style={{ background: c }} />
+              ))}
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div className="flex flex-col gap-3">
               {f.chat.map((m, i) => (
-                <div key={i} style={{ display: "flex", justifyContent: m.from === "user" ? "flex-start" : "flex-end", gap: 10, alignItems: "flex-end" }}>
-                  {m.from === "user" && <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>👨‍🌾</div>}
-                  <div style={{ maxWidth: "78%", padding: "12px 16px", borderRadius: m.from === "user" ? "18px 18px 18px 4px" : "18px 18px 4px 18px", background: m.from === "user" ? "rgba(255,255,255,0.06)" : "rgba(52,211,153,0.1)", border: m.from === "user" ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(52,211,153,0.2)", fontSize: 13, lineHeight: 1.6, color: m.from === "user" ? "#94a3b8" : "#a7f3d0" }}>{m.text}</div>
-                  {m.from === "ai" && <div style={{ width: 30, height: 30, borderRadius: "50%", background: "#059669", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, flexShrink: 0, color: "#fff" }}>AI</div>}
+                <div key={i} className={`flex gap-2.5 items-end ${m.from === "user" ? "" : "flex-row-reverse"}`}>
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                    style={{ background: m.from === "user" ? "rgba(255,255,255,0.06)" : "#059669", color: m.from === "ai" ? "#fff" : undefined }}>
+                    {m.from === "user" ? "👨‍🌾" : "AI"}
+                  </div>
+                  <div className={`max-w-[80%] px-3 sm:px-4 py-2.5 sm:py-3 rounded-2xl text-xs leading-relaxed ${
+                    m.from === "user"
+                      ? "bg-slate-800/60 border border-slate-700/60 text-slate-400 rounded-bl-sm"
+                      : "bg-emerald-500/10 border border-emerald-500/20 text-emerald-200 rounded-br-sm"
+                  }`}>
+                    {m.text}
+                  </div>
                 </div>
               ))}
             </div>
-            <div style={{ marginTop: 24, display: "flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.04)", borderRadius: 12, padding: "10px 14px", border: "1px solid rgba(255,255,255,0.07)" }}>
-              <span style={{ fontSize: 12, color: "#334155", flex: 1 }}>Ask about your crops…</span>
-              <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#34d399", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "#030712", fontWeight: 800 }}>↑</div>
+            <div className="mt-4 sm:mt-5 flex items-center gap-2.5 bg-slate-900/60 rounded-xl px-3 sm:px-4 py-2.5 border border-slate-800">
+              <span className="text-xs text-slate-600 flex-1">Ask about your crops…</span>
+              <div className="w-7 h-7 rounded-full bg-emerald-400 flex items-center justify-center text-xs text-slate-950 font-bold">↑</div>
             </div>
           </div>
         </div>
       </section>
 
-      <hr className="divider" />
+      <div className="h-px bg-slate-800/50 mx-auto max-w-6xl" />
 
       {/* ══ TIPS ══ */}
-      <section style={{ position: "relative", zIndex: 1, padding: "80px 24px", maxWidth: 1100, margin: "0 auto" }}>
-        <div style={{ textAlign: "center", marginBottom: 48 }}>
-          <p className="section-label" style={{ marginBottom: 14 }}>{t("home.farmerTips")}</p>
-          <h2 className="serif" style={{ fontSize: "clamp(30px,5vw,52px)", fontWeight: 700 }}>{t("home.dailyWisdom")}</h2>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: 18 }}>
+      <section className="relative z-10 py-14 sm:py-20 px-4 max-w-6xl mx-auto">
+        <FadeInSection>
+          <div className="text-center mb-10 sm:mb-12">
+            <p className="section-label mb-3">{t("home.farmerTips")}</p>
+            <h2 className="font-display text-[clamp(26px,5vw,52px)] font-bold">{t("home.dailyWisdom")}</h2>
+          </div>
+        </FadeInSection>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {TIPS.map((tip, i) => (
-            <div key={i} className="tip-card" style={{ borderLeft: `3px solid ${tip.color}` }}>
-              <div style={{ fontSize: 30, marginBottom: 12 }}>{tip.icon}</div>
-              <h4 style={{ fontSize: 15, fontWeight: 700, color: tip.color, marginBottom: 8 }}>{tip.title}</h4>
-              <p style={{ fontSize: 13, color: "#475569", lineHeight: 1.85 }}>{tip.body}</p>
-            </div>
+            <FadeInSection key={i} delay={i * 0.07}>
+              <div
+                className="card p-5 sm:p-6 border-l-2 h-full transition-all duration-300 hover:-translate-y-1"
+                style={{ borderLeftColor: tip.color }}
+              >
+                <div className="text-2xl sm:text-3xl mb-3 sm:mb-4">{tip.icon}</div>
+                <h4 className="font-semibold text-sm mb-2" style={{ color: tip.color }}>{tip.title}</h4>
+                <p className="text-xs text-slate-500 leading-relaxed">{tip.body}</p>
+              </div>
+            </FadeInSection>
           ))}
         </div>
       </section>
 
-      <hr className="divider" />
+      <div className="h-px bg-slate-800/50 mx-auto max-w-6xl" />
 
       {/* ══ HOW IT WORKS ══ */}
-      <section style={{ position: "relative", zIndex: 1, padding: "80px 24px", maxWidth: 1000, margin: "0 auto" }}>
-        <div style={{ textAlign: "center", marginBottom: 56 }}>
-          <p className="section-label" style={{ marginBottom: 14 }}>{t("home.howItWorks")}</p>
-          <h2 className="serif" style={{ fontSize: "clamp(30px,5vw,52px)", fontWeight: 700 }}>{t("home.fromFieldToInsight")}</h2>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 32, position: "relative" }}>
-          <div style={{ position: "absolute", top: 44, left: "18%", right: "18%", height: 1, background: "linear-gradient(90deg,transparent,rgba(52,211,153,0.3),transparent)" }} />
+      <section className="relative z-10 py-14 sm:py-20 px-4 max-w-4xl mx-auto">
+        <FadeInSection>
+          <div className="text-center mb-10 sm:mb-14">
+            <p className="section-label mb-3">{t("home.howItWorks")}</p>
+            <h2 className="font-display text-[clamp(26px,5vw,52px)] font-bold">{t("home.fromFieldToInsight")}</h2>
+          </div>
+        </FadeInSection>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 relative">
+          <div className="hidden sm:block absolute top-11 left-[18%] right-[18%] h-px bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent" />
           {[
             { n: "01", icon: "🔐", title: "Create Account", desc: "Sign up free in 30 seconds. No credit card needed to start exploring crop intelligence." },
             { n: "02", icon: "🌾", title: "Ask or Upload", desc: "Type your crop question or drop a leaf photo for instant AI analysis and diagnosis." },
             { n: "03", icon: "📈", title: "Act & Track", desc: "Apply the advice to your fields and revisit history to track changes across seasons." },
           ].map((s, i) => (
-            <div key={i} style={{ textAlign: "center" }}>
-              <div style={{ position: "relative", display: "inline-flex", marginBottom: 20 }}>
-                <div style={{ width: 88, height: 88, borderRadius: 24, background: "rgba(52,211,153,0.05)", border: "1px solid rgba(52,211,153,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36 }}>{s.icon}</div>
-                <div style={{ position: "absolute", top: -8, right: -8, width: 26, height: 26, borderRadius: "50%", background: "#34d399", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, color: "#030712" }}>{s.n}</div>
+            <FadeInSection key={i} delay={i * 0.12}>
+              <div className="text-center">
+                <div className="relative inline-flex mb-4 sm:mb-5">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-emerald-500/5 border border-emerald-500/15 flex items-center justify-center text-2xl sm:text-3xl">
+                    {s.icon}
+                  </div>
+                  <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-emerald-400 flex items-center justify-center text-[10px] font-bold text-slate-950">
+                    {s.n}
+                  </div>
+                </div>
+                <h3 className="font-display text-sm sm:text-base font-bold mb-2">{s.title}</h3>
+                <p className="text-xs text-slate-500 leading-relaxed">{s.desc}</p>
               </div>
-              <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 10 }}>{s.title}</h3>
-              <p style={{ fontSize: 13, color: "#475569", lineHeight: 1.85 }}>{s.desc}</p>
-            </div>
+            </FadeInSection>
           ))}
         </div>
       </section>
 
-      <hr className="divider" />
+      <div className="h-px bg-slate-800/50 mx-auto max-w-6xl" />
 
       {/* ══ TESTIMONIALS ══ */}
-      <section style={{ position: "relative", zIndex: 1, padding: "80px 24px", background: "rgba(52,211,153,0.015)" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 48 }}>
-<p className="section-label" style={{ marginBottom: 14 }}>{t("home.testimonials")}</p>
-          <h2 className="serif" style={{ fontSize: "clamp(30px,5vw,52px)", fontWeight: 700 }}>{t("home.trustedByFarmers")}</h2>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px,1fr))", gap: 20 }}>
-            {TESTIMONIALS.map((t, i) => (
-              <div key={i} className="card" style={{ padding: "28px", display: "flex", flexDirection: "column", gap: 16 }}>
-                <div style={{ fontSize: 28, color: t.color }}>❝</div>
-                <p style={{ fontSize: 14, color: "#64748b", lineHeight: 1.9, flex: 1, fontStyle: "italic" }}>{t.q}</p>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-                  <div style={{ width: 38, height: 38, borderRadius: "50%", background: t.color, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, color: "#030712", fontSize: 15 }}>{t.a}</div>
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>{t.name}</div>
-                    <div style={{ fontSize: 12, color: "#475569" }}>{t.role}</div>
+      <section className="relative z-10 py-14 sm:py-20 px-4 bg-emerald-500/[0.015]">
+        <div className="max-w-6xl mx-auto">
+          <FadeInSection>
+            <div className="text-center mb-10 sm:mb-12">
+              <p className="section-label mb-3">{t("home.testimonials")}</p>
+              <h2 className="font-display text-[clamp(26px,5vw,52px)] font-bold">{t("home.trustedByFarmers")}</h2>
+            </div>
+          </FadeInSection>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            {TESTIMONIALS.map((item, i) => (
+              <FadeInSection key={i} delay={i * 0.1}>
+                <div className="card p-5 sm:p-6 flex flex-col gap-4 h-full">
+                  <div className="text-2xl sm:text-3xl" style={{ color: item.color }}>❝</div>
+                  <p className="text-xs text-slate-500 leading-relaxed flex-1 italic">{item.q}</p>
+                  <div className="flex items-center gap-3 pt-3 border-t border-slate-800">
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-slate-950 text-sm shrink-0"
+                      style={{ background: item.color }}>
+                      {item.a}
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold">{item.name}</div>
+                      <div className="text-[10px] text-slate-500">{item.role}</div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </FadeInSection>
             ))}
           </div>
         </div>
       </section>
 
-      <hr className="divider" />
+      <div className="h-px bg-slate-800/50 mx-auto max-w-6xl" />
 
       {/* ══ WHY FOCUSED ══ */}
-      <section style={{ position: "relative", zIndex: 1, padding: "80px 24px", maxWidth: 960, margin: "0 auto" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
-          <div className="card" style={{ padding: "40px", background: "rgba(52,211,153,0.03)", borderColor: "rgba(52,211,153,0.12)" }}>
-            <div style={{ fontSize: 40, marginBottom: 20 }}>🎯</div>
-            <h3 className="serif" style={{ fontSize: 26, marginBottom: 14, fontWeight: 700 }}>Why only agriculture?</h3>
-            <p style={{ fontSize: 14, color: "#475569", lineHeight: 1.9 }}>CropSage is intentionally trained on crops, soil, irrigation, and plant diseases only. This narrow focus keeps every answer accurate, practical, and genuinely useful for your fields.</p>
-            <p style={{ fontSize: 14, color: "#475569", lineHeight: 1.9, marginTop: 14 }}>When a question falls outside agriculture, we clearly say: <span style={{ color: "#34d399", fontStyle: "italic" }}>"I am not trained in this topic."</span></p>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <section className="relative z-10 py-14 sm:py-20 px-4 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+          <FadeInSection>
+            <div className="card p-6 sm:p-8 border-emerald-500/12 bg-emerald-500/[0.02] h-full">
+              <div className="text-3xl sm:text-4xl mb-4 sm:mb-5">🎯</div>
+              <h3 className="font-display text-xl sm:text-2xl font-bold mb-3 sm:mb-4">Why only agriculture?</h3>
+              <p className="text-sm text-slate-500 leading-relaxed mb-4">CropSage is intentionally trained on crops, soil, irrigation, and plant diseases only. This narrow focus keeps every answer accurate, practical, and genuinely useful for your fields.</p>
+              <p className="text-sm text-slate-500 leading-relaxed">When a question falls outside agriculture, we clearly say:{" "}
+                <span className="text-emerald-400 italic">"I am not trained in this topic."</span>
+              </p>
+            </div>
+          </FadeInSection>
+          <div className="flex flex-col gap-3 sm:gap-4">
             {[
-              { icon: "🔒", color: "#34d399", title: "Secure & Private", desc: "Your farm data stays yours. Encrypted at rest, never shared." },
-              { icon: "⚡", color: "#fbbf24", title: "Instant Responses", desc: "Answers in under 3 seconds, even for complex multi-crop disease queries." },
-              { icon: "🌍", color: "#38bdf8", title: "Works Everywhere", desc: "Supports crops from tropical to temperate climates across 50+ countries." },
+              { icon: "🔒", title: "Secure & Private", desc: "Your farm data stays yours. Encrypted at rest, never shared." },
+              { icon: "⚡", title: "Instant Responses", desc: "Answers in under 3 seconds, even for complex multi-crop disease queries." },
+              { icon: "🌍", title: "Works Everywhere", desc: "Supports crops from tropical to temperate climates across 50+ countries." },
             ].map((item, i) => (
-              <div key={i} className="card" style={{ padding: "20px 24px", display: "flex", gap: 16, alignItems: "flex-start" }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: `rgba(52,211,153,0.07)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>{item.icon}</div>
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>{item.title}</div>
-                  <div style={{ fontSize: 13, color: "#475569", lineHeight: 1.7 }}>{item.desc}</div>
+              <FadeInSection key={i} delay={i * 0.1}>
+                <div className="card p-4 sm:p-5 flex gap-3 sm:gap-4 items-start">
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-emerald-500/6 border border-emerald-500/15 flex items-center justify-center text-lg sm:text-xl shrink-0">
+                    {item.icon}
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold mb-1">{item.title}</div>
+                    <div className="text-xs text-slate-500 leading-relaxed">{item.desc}</div>
+                  </div>
                 </div>
-              </div>
+              </FadeInSection>
             ))}
           </div>
         </div>
       </section>
 
       {/* ══ CTA BANNER ══ */}
-      <section style={{ position: "relative", zIndex: 1, padding: "60px 24px 80px" }}>
-        <div style={{ maxWidth: 680, margin: "0 auto", textAlign: "center", borderRadius: 28, border: "1px solid rgba(52,211,153,0.18)", background: "linear-gradient(135deg, rgba(52,211,153,0.06) 0%, rgba(5,150,105,0.04) 100%)", padding: "56px 40px", position: "relative", overflow: "hidden" }}>
-          <div style={{ position: "absolute", top: -50, right: -50, width: 200, height: 200, borderRadius: "50%", background: "radial-gradient(circle, rgba(52,211,153,0.1) 0%, transparent 70%)" }} />
-          <div style={{ position: "absolute", bottom: -30, left: -30, width: 150, height: 150, borderRadius: "50%", background: "radial-gradient(circle, rgba(5,150,105,0.08) 0%, transparent 70%)" }} />
-          <div style={{ fontSize: 52, marginBottom: 20, position: "relative", zIndex: 1 }}>🌿</div>
-          <h2 className="serif" style={{ fontSize: "clamp(26px,4vw,44px)", fontWeight: 700, marginBottom: 16, position: "relative", zIndex: 1 }}>{t("home.startGrowingSmarter")}</h2>
-          <p style={{ fontSize: 15, color: "#475569", lineHeight: 1.8, marginBottom: 32, maxWidth: 420, margin: "0 auto 32px", position: "relative", zIndex: 1 }}>{t("home.joinFarmersCta")}</p>
-          <Link
-            to="/auth?mode=signUp"
-            className="cta-btn"
-            style={{ fontSize: 16, padding: "16px 44px", position: "relative", zIndex: 1, textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center" }}
-          >
-            {t("home.createFreeAccount")}
-          </Link>
-        </div>
+      <section className="relative z-10 py-12 sm:py-16 px-4">
+        <FadeInSection>
+          <div className="max-w-2xl mx-auto text-center rounded-2xl sm:rounded-3xl border border-emerald-500/18 bg-gradient-to-br from-emerald-500/6 to-teal-500/4 p-8 sm:p-14 relative overflow-hidden">
+            <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-emerald-500/10 blur-2xl" />
+            <div className="absolute -bottom-8 -left-8 w-36 h-36 rounded-full bg-emerald-600/8 blur-2xl" />
+            <div className="text-4xl sm:text-5xl mb-4 sm:mb-5 relative z-10">🌿</div>
+            <h2 className="font-display text-[clamp(22px,4vw,42px)] font-bold mb-3 sm:mb-4 relative z-10">{t("home.startGrowingSmarter")}</h2>
+            <p className="text-sm text-slate-500 leading-relaxed mb-6 sm:mb-8 max-w-md mx-auto relative z-10">{t("home.joinFarmersCta")}</p>
+            <Link to="/auth?mode=signUp" className="btn-primary text-sm px-7 sm:px-9 py-3 sm:py-3.5 relative z-10 inline-flex font-display">
+              {t("home.createFreeAccount")}
+            </Link>
+          </div>
+        </FadeInSection>
       </section>
 
       {/* ══ FOOTER ══ */}
-      <footer style={{ position: "relative", zIndex: 1, borderTop: "1px solid rgba(255,255,255,0.05)", background: "#010810", padding: "60px 24px 32px" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr 1fr 1fr", gap: 40, marginBottom: 48 }}>
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-                <span style={{ fontSize: 28 }}>🌾</span>
-                <span className="serif" style={{ fontSize: 24, color: "#34d399", fontWeight: 700 }}>CropSage</span>
+      <footer className="relative z-10 border-t border-slate-900 bg-[#010810] py-12 sm:py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-10 mb-10 sm:mb-12">
+            {/* Brand — full width on mobile */}
+            <div className="col-span-2 sm:col-span-2 lg:col-span-1">
+              <div className="flex items-center gap-2.5 mb-4">
+                <span className="text-2xl">🌾</span>
+                <span className="font-display text-lg font-bold text-emerald-400">CropSage</span>
               </div>
-              <p style={{ fontSize: 13, color: "#334155", lineHeight: 1.85, maxWidth: 240, marginBottom: 20 }}>AI-powered agricultural intelligence for modern farmers and agronomists worldwide.</p>
-              <div style={{ display: "flex", gap: 10 }}>
-                {["𝕏", "in", "gh"].map((s, i) => (
-                  <a key={i} href="#" style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "#475569", textDecoration: "none", transition: "all 0.2s" }}
-                    onMouseEnter={e => { e.target.style.borderColor = "rgba(52,211,153,0.4)"; e.target.style.color = "#34d399"; }}
-                    onMouseLeave={e => { e.target.style.borderColor = "rgba(255,255,255,0.07)"; e.target.style.color = "#475569"; }}
-                  >{s}</a>
-                ))}
-              </div>
+              <p className="text-xs text-slate-600 leading-relaxed max-w-xs">
+                AI-powered agricultural intelligence for modern farmers and agronomists worldwide.
+              </p>
             </div>
             {[
               { title: "Product", links: ["Crop Chat", "Disease Detection", "Irrigation Guide", "History Tracking"] },
               { title: "Resources", links: ["Documentation", "Blog & Research", "Video Tutorials", "API Access"] },
               { title: "Company", links: ["About CropSage", "Careers", "Privacy Policy", "Contact Us"] },
-            ].map(col => (
+            ].map((col) => (
               <div key={col.title}>
-                <h4 style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", color: "#475569", marginBottom: 18 }}>{col.title}</h4>
-                <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 11 }}>
-                  {col.links.map(l => (
-                    <li key={l}><a href="#" style={{ fontSize: 13, color: "#334155", textDecoration: "none", transition: "color 0.2s" }}
-                      onMouseEnter={e => e.target.style.color = "#34d399"}
-                      onMouseLeave={e => e.target.style.color = "#334155"}
-                    >{l}</a></li>
+                <h4 className="section-label mb-3 sm:mb-4">{col.title}</h4>
+                <ul className="flex flex-col gap-2 sm:gap-2.5">
+                  {col.links.map((l) => (
+                    <li key={l}>
+                      <a href="#" className="text-xs text-slate-600 hover:text-emerald-400 transition-colors duration-200">{l}</a>
+                    </li>
                   ))}
                 </ul>
               </div>
             ))}
           </div>
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: 24, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-            <p style={{ fontSize: 12, color: "#1e293b" }}>{t("home.copyright")}</p>
-            <p style={{ fontSize: 12, color: "#1e293b" }}>{t("home.focusedOnAgriculture")}</p>
+          <div className="border-t border-slate-900/80 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p className="text-xs text-slate-800 text-center sm:text-left">{t("home.copyright")}</p>
+            <p className="text-xs text-slate-800 text-center sm:text-right">{t("home.focusedOnAgriculture")}</p>
           </div>
         </div>
       </footer>
