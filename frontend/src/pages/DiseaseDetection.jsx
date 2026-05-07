@@ -1,9 +1,8 @@
+
 import { useState, useRef } from "react";
 import axios from "axios";
 
-
 const API_BASE = import.meta.env?.VITE_API_BASE_URL || "http://localhost:5001";
-
 function DiseaseDetection() {
   const [image, setImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -12,7 +11,6 @@ function DiseaseDetection() {
   const [error, setError] = useState(null);
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef(null);
-
   const handleFile = (file) => {
     if (!file || !file.type.startsWith("image/")) return;
     setImage(file);
@@ -20,15 +18,12 @@ function DiseaseDetection() {
     setError(null);
     setPreviewUrl(URL.createObjectURL(file));
   };
-
   const handleFileChange = (e) => handleFile(e.target.files?.[0]);
-
   const handleDrop = (e) => {
     e.preventDefault();
     setDragOver(false);
     handleFile(e.dataTransfer.files?.[0]);
   };
-
   const handleSubmit = async () => {
     if (!image) { setError("Please upload a leaf image first."); return; }
     const formData = new FormData();
@@ -36,24 +31,14 @@ function DiseaseDetection() {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.post(`${API_BASE}/api/disease/predict`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-        timeout: 180000,
-      });
+      const response = await axios.post(`${API_BASE}/api/disease/predict`, formData);
       setResult(response.data);
-    } catch (err) {
-      const serverMsg =
-        err.response?.data?.message ||
-        err.response?.data?.error ||
-        err.message ||
-        "Prediction failed. Please try again.";
-      setError(serverMsg);
-      console.error("[DiseaseDetection] predict error:", err.response?.data || err.message);
+    } catch {
+      setError("Prediction failed. Please try again.");
     } finally {
       setLoading(false);
     }
   };
-
   const plantDisease = (() => {
     if (!result) return null;
     if (result.plant || result.diseaseName) {
@@ -69,13 +54,11 @@ function DiseaseDetection() {
       disease: disease?.replaceAll("_", " "),
     };
   })();
-
   const confidence =
     result?.confidence != null && !Number.isNaN(Number(result.confidence))
       ? Math.min(100, Math.max(0, Number(result.confidence)))
       : null;
   const treatment = result?.treatmentAdvice || null;
-
   const TreatmentBlock = ({ title, items, fallback }) => {
     const list = Array.isArray(items) && items.length > 0 ? items : fallback;
     return (
@@ -92,7 +75,6 @@ function DiseaseDetection() {
       </div>
     );
   };
-
   return (
     <div
       
@@ -123,13 +105,11 @@ function DiseaseDetection() {
           ))}
         </div>
       </div>
-
       {/* Main grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Upload card */}
         <div className="card p-6 flex flex-col gap-4">
           <p className="section-label">Upload leaf image</p>
-
           <div
             
             className={`border-2 border-dashed rounded-2xl p-10 flex flex-col items-center justify-center gap-3 cursor-pointer transition-colors duration-200 ${
@@ -149,7 +129,6 @@ function DiseaseDetection() {
             <div className="text-xs text-slate-500">or click to browse · JPG, PNG supported</div>
             <input ref={inputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
           </div>
-
           {image && (
             <div
               
@@ -161,7 +140,6 @@ function DiseaseDetection() {
               <span className="text-emerald-400 text-sm font-bold">✓</span>
             </div>
           )}
-
           <button
             onClick={handleSubmit}
             disabled={loading}
@@ -179,7 +157,6 @@ function DiseaseDetection() {
               </span>
             )}
           </button>
-
           {error && (
             <div
               
@@ -190,11 +167,9 @@ function DiseaseDetection() {
             </div>
           )}
         </div>
-
         {/* Result card */}
         <div className="card p-6 flex flex-col gap-4">
           <p className="section-label">Detection result</p>
-
           {!previewUrl && !result && (
             <div className="flex-1 flex flex-col items-center justify-center gap-3 py-16">
               <div className="text-4xl opacity-30">🍃</div>
@@ -203,7 +178,6 @@ function DiseaseDetection() {
               </p>
             </div>
           )}
-
           {previewUrl && (
             <div className="relative rounded-2xl overflow-hidden aspect-video bg-slate-900">
               <img src={previewUrl} alt="Uploaded leaf" className="w-full h-full object-contain" />
@@ -223,7 +197,6 @@ function DiseaseDetection() {
               </div>
             </div>
           )}
-
           
             {plantDisease && (
               <div
@@ -242,7 +215,6 @@ function DiseaseDetection() {
                     </div>
                   ))}
                 </div>
-
                 {confidence !== null && (
                   <div className="space-y-1.5">
                     <div className="flex justify-between text-xs">
@@ -259,7 +231,6 @@ function DiseaseDetection() {
                     </div>
                   </div>
                 )}
-
                 {Array.isArray(result?.top_predictions) && result.top_predictions.length > 1 && (
                   <div className="space-y-1.5">
                     <div className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Other likely matches</div>
@@ -275,7 +246,6 @@ function DiseaseDetection() {
                 )}
               </div>
             )}
-
             {result && !plantDisease && (
               <pre className="text-xs text-slate-500 bg-slate-900/60 rounded-xl p-4 overflow-auto max-h-40 font-mono">
                 {JSON.stringify(result, null, 2)}
@@ -284,7 +254,6 @@ function DiseaseDetection() {
           
         </div>
       </div>
-
       {/* Treatment card */}
       
         {treatment && (
@@ -306,7 +275,6 @@ function DiseaseDetection() {
                 <p className="text-sm text-slate-400 mt-1 leading-relaxed">{treatment.short_summary}</p>
               )}
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <TreatmentBlock
                 title="🌿 Organic treatment"
@@ -336,7 +304,6 @@ function DiseaseDetection() {
                 ]}
               />
             </div>
-
             <div className="rounded-xl bg-slate-900/60 border border-slate-800 px-4 py-3 text-xs text-slate-500 leading-relaxed">
               <span className="text-slate-400 font-semibold">Note:</span> This guidance is AI-generated. Always cross-check with your local agriculture officer or extension worker for dosage and products available in your area.
             </div>
@@ -346,5 +313,4 @@ function DiseaseDetection() {
     </div>
   );
 }
-
 export default DiseaseDetection;
