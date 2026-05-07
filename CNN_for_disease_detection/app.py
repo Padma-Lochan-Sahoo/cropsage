@@ -1,17 +1,20 @@
 """
 CropSage AI Server
 ==================
-POST /predict        — Plant disease detection via CNN
-POST /recommend-crop — Crop recommendation via sklearn pipeline
-GET  /health         — Liveness + readiness check
-GET  /warmup         — Trigger model load before real traffic (call after deploy)
+Models are loaded ONCE at startup inside the application factory.
+This is simpler, safer and avoids all the threading/lazy-load bugs.
+
+Gunicorn is configured with:
+  - workers=1      (only 1 worker so model loads once, not per-worker)
+  - preload_app=False  (gunicorn forks AFTER app is imported; with 1 worker
+                        this is fine and avoids master-process OOM)
+  - timeout=300    (5 min — covers TF import + model load on cold Render instance)
 """
 
 import io
 import logging
 import os
 import pickle
-import threading
 import traceback
 
 import numpy as np
@@ -19,127 +22,62 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from PIL import Image, ImageOps
 
-# ---------------------------------------------------------------------------
-# Logging
-# ---------------------------------------------------------------------------
+# ── Logging ────────────────────────────────────────────────────────────────
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 logger = logging.getLogger("cropsage")
 
-# ---------------------------------------------------------------------------
-# App
-# ---------------------------------------------------------------------------
+# ── App ────────────────────────────────────────────────────────────────────
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
+# ── Model paths ────────────────────────────────────────────────────────────
 BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "trained_plant_disease_model.keras")
 PKL_PATH   = os.path.join(BASE_DIR, "crop_pipeline_model.pkl")
 
-# ---------------------------------------------------------------------------
-# Lazy model loading — TF is imported only when first request arrives.
-# This prevents Gunicorn master from OOMing before it can bind the port.
-# ---------------------------------------------------------------------------
-_lock          = threading.Lock()
-_disease_model = None   # set after first successful load
-_crop_model    = None
-_load_error    = None   # non-None string means loading failed permanently
+# ── Load models at module import time ─────────────────────────────────────
+# With gunicorn workers=1 this runs exactly once per dyno restart.
+# We import TensorFlow here so any import error surfaces immediately in logs.
 
+logger.info("=== CropSage AI Server starting ===")
+logger.info("BASE_DIR : %s", BASE_DIR)
+logger.info("MODEL_PATH exists: %s", os.path.isfile(MODEL_PATH))
+logger.info("PKL_PATH   exists: %s", os.path.isfile(PKL_PATH))
 
-def _ensure_models_loaded():
-    """Load models on first call; subsequent calls are near-zero cost."""
-    global _disease_model, _crop_model, _load_error
+disease_model = None
+crop_model    = None
+startup_error = None   # set if loading fails; returned in /health
 
-    if _disease_model is not None or _load_error is not None:
-        return  # fast path
+try:
+    logger.info("Importing TensorFlow ...")
+    import tensorflow as tf
+    logger.info("TensorFlow version: %s", tf.__version__)
 
-    with _lock:
-        if _disease_model is not None or _load_error is not None:
-            return  # another thread beat us to it
+    logger.info("Loading CNN model from %s ...", MODEL_PATH)
+    disease_model = tf.keras.models.load_model(MODEL_PATH)
+    logger.info("CNN model loaded OK — output shape: %s", disease_model.output_shape)
 
-        try:
-            if not os.path.isfile(MODEL_PATH):
-                raise FileNotFoundError(
-                    f"CNN model not found at: {MODEL_PATH}\n"
-                    "Make sure trained_plant_disease_model.keras is committed to the repo."
-                )
-            if not os.path.isfile(PKL_PATH):
-                raise FileNotFoundError(
-                    f"Pickle model not found at: {PKL_PATH}\n"
-                    "Make sure crop_pipeline_model.pkl is committed to the repo."
-                )
+    logger.info("Loading crop pipeline from %s ...", PKL_PATH)
+    with open(PKL_PATH, "rb") as fh:
+        crop_model = pickle.load(fh)
+    logger.info("Crop pipeline loaded OK — type: %s", type(crop_model).__name__)
 
-            logger.info("Importing TensorFlow (slow on first call) ...")
-            # Deferred import — keeps module-level import fast so Gunicorn can start
-            import tensorflow as tf  # noqa: F401 — used below for load_model
-            logger.info("TensorFlow imported, loading CNN model ...")
-            _disease_model = tf.keras.models.load_model(MODEL_PATH)
-            logger.info("CNN model loaded OK")
+    logger.info("=== All models ready ===")
 
-            logger.info("Loading crop pipeline ...")
-            with open(PKL_PATH, "rb") as fh:
-                _crop_model = pickle.load(fh)
-            logger.info("Crop pipeline loaded OK")
+except Exception as exc:
+    startup_error = str(exc)
+    logger.critical(
+        "STARTUP FAILED — models did not load:\n%s\n%s",
+        exc,
+        traceback.format_exc(),
+    )
+    # We do NOT exit — we let the app start so /health returns a useful error message
+    # rather than Render showing a generic 502.
 
-        except Exception as exc:
-            _load_error = str(exc)
-            logger.critical(
-                "Model loading FAILED: %s\n%s", exc, traceback.format_exc()
-            )
-
-
-# ---------------------------------------------------------------------------
-# Image preprocessing
-# ---------------------------------------------------------------------------
-MAX_IMAGE_BYTES = 10 * 1024 * 1024  # 10 MB
-
-def _preprocess_image(file_storage) -> np.ndarray:
-    """
-    Convert an uploaded image to a (1, 128, 128, 3) float32 array.
-
-    *** DO NOT divide by 255 ***
-    The model was trained with tf.keras.utils.image_dataset_from_directory
-    which feeds raw [0-255] pixel values.  Normalising to [0-1] causes
-    near-zero activations — the model will always output the same class.
-
-    We intentionally avoid keras.preprocessing.image.img_to_array here:
-    that function was moved/deprecated across TF versions and is just a
-    thin wrapper around numpy anyway.
-    """
-    raw = file_storage.read()
-    if not raw:
-        raise ValueError("Empty upload — no bytes received")
-    if len(raw) > MAX_IMAGE_BYTES:
-        raise ValueError(
-            f"Image too large ({len(raw) // 1024} KB). Maximum is 10 MB."
-        )
-
-    try:
-        img = Image.open(io.BytesIO(raw))
-    except Exception as exc:
-        raise ValueError(f"Cannot decode image: {exc}") from exc
-
-    img = ImageOps.exif_transpose(img)  # fix phone rotation
-    img = img.convert("RGB")
-
-    try:
-        resample = Image.Resampling.LANCZOS
-    except AttributeError:          # Pillow < 9.1
-        resample = Image.LANCZOS    # type: ignore[attr-defined]
-
-    img = img.resize((128, 128), resample)
-
-    # Pure numpy — no TF dependency for this step
-    arr = np.array(img, dtype=np.float32)   # shape (128, 128, 3), values [0-255]
-    arr = np.expand_dims(arr, axis=0)       # shape (1, 128, 128, 3)
-    return arr
-
-
-# ---------------------------------------------------------------------------
-# Class labels
-# ---------------------------------------------------------------------------
+# ── Class labels ──────────────────────────────────────────────────────────
 CLASS_NAMES = [
     "Apple___Apple_scab", "Apple___Black_rot", "Apple___Cedar_apple_rust",
     "Apple___healthy", "Blueberry___healthy",
@@ -168,10 +106,43 @@ CLASS_NAMES = [
     "Tomato___healthy",
 ]
 
+MAX_IMAGE_BYTES = 10 * 1024 * 1024  # 10 MB
 
-# ---------------------------------------------------------------------------
-# Routes
-# ---------------------------------------------------------------------------
+
+# ── Image preprocessing ───────────────────────────────────────────────────
+def _preprocess_image(file_storage) -> np.ndarray:
+    """
+    Return a (1, 128, 128, 3) float32 array with pixel values in [0, 255].
+
+    DO NOT normalise to [0-1] — the model was trained on raw [0-255] values.
+    Normalising causes near-zero activations and breaks predictions.
+    """
+    raw = file_storage.read()
+    if not raw:
+        raise ValueError("Empty upload — no bytes received")
+    if len(raw) > MAX_IMAGE_BYTES:
+        raise ValueError(f"Image too large ({len(raw) // 1024} KB). Max 10 MB.")
+
+    try:
+        img = Image.open(io.BytesIO(raw))
+    except Exception as exc:
+        raise ValueError(f"Cannot decode image: {exc}") from exc
+
+    img = ImageOps.exif_transpose(img)  # fix phone EXIF rotation
+    img = img.convert("RGB")
+
+    try:
+        resample = Image.Resampling.LANCZOS
+    except AttributeError:
+        resample = Image.LANCZOS  # type: ignore[attr-defined]
+
+    img  = img.resize((128, 128), resample)
+    arr  = np.array(img, dtype=np.float32)   # (128, 128, 3) — pure numpy, no TF dep
+    arr  = np.expand_dims(arr, axis=0)       # (1, 128, 128, 3)
+    return arr
+
+
+# ── Routes ────────────────────────────────────────────────────────────────
 
 @app.route("/", methods=["GET"])
 def home():
@@ -180,63 +151,44 @@ def home():
 
 @app.route("/health", methods=["GET"])
 def health():
+    """
+    Call this to verify models loaded correctly after deploy:
+        curl https://cropsage-ai-models.onrender.com/health
+    Expect: {"disease_model_loaded": true, "crop_model_loaded": true}
+    """
     return jsonify({
-        "status":               "ok",
-        "disease_model_loaded": _disease_model is not None,
-        "crop_model_loaded":    _crop_model is not None,
-        "load_error":           _load_error,
+        "status":               "ok" if (disease_model and crop_model) else "degraded",
+        "disease_model_loaded": disease_model is not None,
+        "crop_model_loaded":    crop_model is not None,
+        "startup_error":        startup_error,
     })
-
-
-@app.route("/warmup", methods=["GET", "POST"])
-def warmup():
-    """
-    Trigger model loading without a real prediction.
-    Call this endpoint once after every deploy to pre-warm the instance:
-        curl https://cropsage-ai-models.onrender.com/warmup
-    """
-    logger.info("/warmup called — loading models ...")
-    _ensure_models_loaded()
-
-    if _load_error:
-        return jsonify({"status": "error", "detail": _load_error}), 500
-
-    return jsonify({"status": "ready", "message": "Models loaded successfully"})
 
 
 @app.route("/predict", methods=["POST"])
 def predict():
     logger.info("POST /predict | content-type: %s", request.content_type)
 
-    _ensure_models_loaded()
-
-    if _load_error:
-        logger.error("Returning 503 — model load error: %s", _load_error)
+    if disease_model is None:
+        logger.error("disease_model is None — startup_error: %s", startup_error)
         return jsonify({
-            "error":  "AI model failed to load",
-            "detail": _load_error,
-        }), 503
-
-    if _disease_model is None:
-        return jsonify({
-            "error": "Model not ready — loading may still be in progress, retry in 10 s",
+            "error":  "Disease model not loaded",
+            "detail": startup_error or "Unknown startup error. Check Render logs.",
         }), 503
 
     # Validate uploaded file
     file = request.files.get("image")
     if file is None:
-        available = list(request.files.keys())
-        logger.warning("No 'image' field. Available: %s", available)
+        logger.warning("No 'image' field. Fields received: %s", list(request.files.keys()))
         return jsonify({
             "error":  "No image uploaded",
-            "detail": f"Expected multipart field 'image'. Got: {available}",
+            "detail": f"Expected multipart field 'image'. Got: {list(request.files.keys())}",
         }), 400
 
     # Preprocess
     try:
         batch = _preprocess_image(file)
     except ValueError as exc:
-        logger.warning("Preprocessing failed: %s", exc)
+        logger.warning("Preprocessing error: %s", exc)
         return jsonify({"error": str(exc)}), 400
     except Exception:
         logger.exception("Unexpected preprocessing error")
@@ -245,7 +197,7 @@ def predict():
     # Inference
     try:
         logger.info("Running model.predict ...")
-        preds = _disease_model.predict(batch, verbose=0)
+        preds = disease_model.predict(batch, verbose=0)
         logger.info("Inference complete")
     except Exception:
         logger.exception("Inference error")
@@ -255,24 +207,21 @@ def predict():
     probs = np.asarray(preds[0], dtype=np.float64).reshape(-1)
 
     if probs.size != len(CLASS_NAMES):
-        logger.error("Output size %d != class list %d", probs.size, len(CLASS_NAMES))
+        logger.error("Output size %d != CLASS_NAMES %d", probs.size, len(CLASS_NAMES))
         return jsonify({
-            "error": f"Model output {probs.size} != class list {len(CLASS_NAMES)}",
+            "error": f"Model output size {probs.size} does not match class list {len(CLASS_NAMES)}",
         }), 500
 
-    top_idx        = np.argsort(probs)[::-1][:3]
-    result_index   = int(top_idx[0])
-    confidence     = float(probs[result_index])
+    top_idx      = np.argsort(probs)[::-1][:3]
+    result_index = int(top_idx[0])
+    confidence   = float(probs[result_index])
 
     top_predictions = [
         {"disease": CLASS_NAMES[i], "confidence": round(float(probs[i]) * 100, 2)}
         for i in top_idx
     ]
 
-    logger.info(
-        "Prediction: %s  confidence: %.1f%%",
-        CLASS_NAMES[result_index], confidence * 100,
-    )
+    logger.info("Prediction: %s (%.1f%%)", CLASS_NAMES[result_index], confidence * 100)
 
     return jsonify({
         "disease":         CLASS_NAMES[result_index],
@@ -283,14 +232,14 @@ def predict():
 
 @app.route("/recommend-crop", methods=["POST"])
 def recommend_crop():
-    logger.info("POST /recommend-crop")
+    logger.info("POST /recommend-crop | content-type: %s", request.content_type)
 
-    _ensure_models_loaded()
-
-    if _load_error:
-        return jsonify({"error": "Model failed to load", "detail": _load_error}), 503
-    if _crop_model is None:
-        return jsonify({"error": "Crop model not ready — retry in 10 s"}), 503
+    if crop_model is None:
+        logger.error("crop_model is None — startup_error: %s", startup_error)
+        return jsonify({
+            "error":  "Crop model not loaded",
+            "detail": startup_error or "Unknown startup error. Check Render logs.",
+        }), 503
 
     try:
         if request.is_json:
@@ -308,7 +257,7 @@ def recommend_crop():
         rainfall    = float(get("Rainfall"))
 
     except (KeyError, ValueError, TypeError) as exc:
-        logger.warning("Bad input to /recommend-crop: %s", exc)
+        logger.warning("Bad input: %s", exc)
         return jsonify({"error": "Invalid input", "detail": str(exc)}), 400
 
     features = np.array(
@@ -316,9 +265,9 @@ def recommend_crop():
     ).reshape(1, -1)
 
     try:
-        prediction = _crop_model.predict(features)
+        prediction = crop_model.predict(features)
     except Exception:
-        logger.exception("Crop model predict error")
+        logger.exception("Crop predict error")
         return jsonify({"error": "Crop prediction error"}), 500
 
     crop_dict = {
@@ -341,9 +290,7 @@ def recommend_crop():
     return jsonify({"result": result, "crop": crop})
 
 
-# ---------------------------------------------------------------------------
-# Dev entry point — Render uses gunicorn via gunicorn.conf.py
-# ---------------------------------------------------------------------------
+# ── Dev entry point ───────────────────────────────────────────────────────
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)

@@ -121,6 +121,7 @@ export const recommend = async (req, res) => {
       formData,
       {
         headers: formData.getHeaders(),
+        timeout: 300_000, // 5 min — covers Render cold start + TF model load
       }
     );
 
