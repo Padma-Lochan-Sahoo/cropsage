@@ -1,6 +1,9 @@
-tensorflow==2.17.1
-numpy==1.24.3
-scikit-learn==1.2.2
-flask
-pillow
-gunicorn
+# Use tensorflow-cpu — same API, ~300 MB smaller than full tensorflow,
+# no GPU drivers needed on Render's CPU-only instances.
+tensorflow-cpu==2.17.1
+numpy>=1.26.0,<2.0
+scikit-learn==1.4.2
+flask>=3.0.0
+flask-cors>=4.0.0
+pillow>=10.0.0
+gunicorn>=22.0.0
