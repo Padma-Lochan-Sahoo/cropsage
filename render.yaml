@@ -1,0 +1,36 @@
+services:
+  # ── Flask AI Server ────────────────────────────────────────────────────────
+  - type: web
+    name: cropsage-ai-models
+    runtime: python
+    rootDir: CNN_for_disease_detection
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app -c gunicorn.conf.py
+    # IMPORTANT: Use 'standard' or higher. The 'starter' (free) plan has 512 MB RAM
+    # which is not enough for tensorflow-cpu (~400 MB) + model weights (~100 MB).
+    plan: standard
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+
+  # ── Express Backend ────────────────────────────────────────────────────────
+  - type: web
+    name: cropsage-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    plan: starter
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: FLASK_SERVER_URL
+        # Replace with your actual cropsage-ai-models service URL after deploy
+        value: https://cropsage-ai-models.onrender.com
+      - key: PORT
+        value: "5001"
+      # Set these in Render dashboard (not here — sensitive):
+      # MONGO_URI, JWT_SECRET, SESSION_SECRET,
+      # GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET,
+      # OPENAI_API_KEY, OPENWEATHER_API_KEY
