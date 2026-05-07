@@ -68,39 +68,59 @@ def home():
 
 @app.route("/predict", methods=["POST"])
 def predict():
-    if "image" not in request.files:
-        return jsonify({"error": "No image uploaded"}), 400
-    file = request.files["image"]
-
     try:
+        print("=== Predict API called ===")
+
+        if "image" not in request.files:
+            print("No image uploaded")
+            return jsonify({"error": "No image uploaded"}), 400
+
+        file = request.files["image"]
+
+        print("Preparing image...")
         batch = _prepare_image(file)
-    except Exception as e:
-        return jsonify({"error": f"Invalid image: {str(e)}"}), 400
 
-    # batch shape: (1, 128, 128, 3)
-    predictions = model.predict(batch, verbose=0)
-    probs = np.asarray(predictions[0], dtype=np.float64).reshape(-1)
+        print("Running model prediction...")
+        predictions = model.predict(batch, verbose=0)
 
-    n_classes = len(class_name)
-    if probs.size != n_classes:
+        print("Prediction complete")
+
+        probs = np.asarray(predictions[0], dtype=np.float64).reshape(-1)
+
+        n_classes = len(class_name)
+
+        if probs.size != n_classes:
+            print("Class mismatch")
+            return jsonify({
+                "error": f"Model output size {probs.size} does not match class list ({n_classes})",
+            }), 500
+
+        result_index = int(np.argmax(probs))
+        confidence = float(np.max(probs))
+
+        top_indices = np.argsort(probs)[::-1][:3]
+
+        top_predictions = [
+            {
+                "disease": class_name[i],
+                "confidence": round(float(probs[i]) * 100, 2)
+            }
+            for i in top_indices
+        ]
+
+        print("Returning response")
+
         return jsonify({
-            "error": f"Model output size {probs.size} does not match class list ({n_classes})",
+            "disease": class_name[result_index],
+            "confidence": round(confidence * 100, 2),
+            "top_predictions": top_predictions,
+        })
+
+    except Exception as e:
+        print("PREDICT ERROR:", str(e))
+        return jsonify({
+            "error": str(e)
         }), 500
-
-    result_index = int(np.argmax(probs))
-    confidence = float(np.max(probs))
-
-    top_indices = np.argsort(probs)[::-1][:3]
-    top_predictions = [
-        {"disease": class_name[i], "confidence": round(float(probs[i]) * 100, 2)}
-        for i in top_indices
-    ]
-
-    return jsonify({
-        "disease": class_name[result_index],
-        "confidence": round(confidence * 100, 2),
-        "top_predictions": top_predictions,
-    })
 
 @app.route("/recommend-crop", methods=["POST"])
 def recommend_crop():
