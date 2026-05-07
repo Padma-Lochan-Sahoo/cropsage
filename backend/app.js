@@ -20,7 +20,7 @@ connectDB();
 // Middleware
 app.use(cors({
   origin: [
-    "https://cropsage-zeta.vercel.app/",
+    "https://cropsage-zeta.vercel.app",
     "http://localhost:3000"
   ],
   credentials: true
