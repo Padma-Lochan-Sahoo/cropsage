@@ -3,6 +3,7 @@ import FormData from "form-data";
 import OpenAI from "openai";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const Flask_SERVER_URL = process.env.FLASK_SERVER_URL || "http://127.0.0.1:5000";
 
 export const predictDisease = async (req, res) => {
   try {
@@ -14,10 +15,11 @@ export const predictDisease = async (req, res) => {
     formData.append("image", req.file.buffer, req.file.originalname);
 
     const response = await axios.post(
-      "http://127.0.0.1:5000/predict",
+      `${Flask_SERVER_URL}/predict`,
       formData,
       {
         headers: formData.getHeaders(),
+        timeout: 120000,
       }
     );
 
@@ -82,8 +84,19 @@ export const predictDisease = async (req, res) => {
       diseaseName,
       treatmentAdvice,
     });
+  // } catch (error) {
+  //   console.error("Prediction Error:", error.message || error);
+  //   return res.status(500).json({ message: "Prediction failed" });
+  // }
   } catch (error) {
-    console.error("Prediction Error:", error.message || error);
-    return res.status(500).json({ message: "Prediction failed" });
-  }
+  console.error(
+    "Prediction Error:",
+    error.response?.data || error.message || error
+  );
+
+  return res.status(500).json({
+    message: "Prediction failed",
+    error: error.response?.data || error.message,
+  });
+}
 };

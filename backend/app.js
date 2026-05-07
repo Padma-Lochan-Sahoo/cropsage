@@ -19,9 +19,16 @@ connectDB();
 
 // Middleware
 app.use(cors({
-  origin: "http://localhost:3000",
+  origin: [
+    "http://localhost:3000"
+  ],
   credentials: true
 }));
+
+app.use((req, res, next) => {
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+  next();
+});
 app.use(express.json());
 
 
@@ -37,6 +44,8 @@ app.use("/api/profile", profileRoute);
 app.use("/api/weather", weatherRoute);
 app.use("/api/fertilizer", fertilizerRoute);
 
+const Flask_SERVER_URL = process.env.FLASK_SERVER_URL || "http://127.0.0.1:5000";
+console.log(`Flask server ${Flask_SERVER_URL}`);
 
 // Start the server
 const PORT = process.env.PORT || 5001;
