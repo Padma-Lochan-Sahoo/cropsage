@@ -8,7 +8,7 @@ import axios from "axios";
 import FormData from "form-data";
 import OpenAI from "openai";
 
-const CROP_API_URL = process.env.CROP_RECOMMENDATION_API_URL || "http://127.0.0.1:5000";
+const Flask_SERVER_URL = process.env.FLASK_SERVER_URL || "http://127.0.0.1:5000";
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const parseCropName = (value) => {
@@ -117,7 +117,7 @@ export const recommend = async (req, res) => {
     formData.append("Rainfall", String(rain));
 
     const response = await axios.post(
-      `${CROP_API_URL}/recommend-crop`,
+      `${Flask_SERVER_URL}/recommend-crop`,
       formData,
       {
         headers: formData.getHeaders(),
